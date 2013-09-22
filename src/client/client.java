@@ -34,7 +34,8 @@ public class client
 
 
         String server = "teaching";
-        int port = 1099;
+       // int port = 1099;
+        int port = 8807;
         if (args.length > 0)
         {
             server = args[0];
@@ -51,14 +52,14 @@ public class client
         
         try 
         {
-            // get a reference to the rmiregistry
+            // get a reference to the rmiregistry for the middleware server
             Registry registry = LocateRegistry.getRegistry(server, port);
             // get the proxy and the remote reference by rmiregistry lookup
-            rm = (ResourceManager) registry.lookup("group_7_pawel");
+            rm = (ResourceManager) registry.lookup("group_7_middle");
             if(rm!=null)
             {
                 System.out.println("Successful");
-                System.out.println("Connected to RM");
+                System.out.println("Connected to Middle RM");
             }
             else
             {
@@ -75,7 +76,7 @@ public class client
         
         
         if (System.getSecurityManager() == null) {
-            //System.setSecurityManager(new RMISecurityManager());
+            System.setSecurityManager(new RMISecurityManager());
         }
 
         

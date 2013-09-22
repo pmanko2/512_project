@@ -7,16 +7,26 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Vector;
 
-import ResImpl.ResourceManagerImpl;
 import ResInterface.ResourceManager;
 
-public class MiddlewareImplementation implements ResourceManager {
+public class MiddlewareImpl implements ResourceManager {
+	
+    //this references an RM Object (NOT Middleware)
+    static ResourceManager rm = null;
+
 
 	public static void main(String[] args)
 	{
 		// Figure out where server is running
-        String server = "localhost";
-        int port = 1099;
+        String server = "teaching";
+       // int port = 1099;
+        /**
+         * Creating our own RMI registry, global one isn't working
+         */
+        int port = 8807;
+        
+        String rmserver = "lab2-10";
+        int rmport = 7707;
 
         if (args.length == 1) {
             server = server + ":" + args[0];
@@ -26,18 +36,44 @@ public class MiddlewareImplementation implements ResourceManager {
             System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
             System.exit(1);
         }
+        
 
         try {
+        	/**
+        	 * CONNECT TO RMIREGISTRY AS SERVER TO BE CONNECTED TO FROM CLIENT
+        	 */
             // create a new Server object
-            ResourceManagerImpl obj = new ResourceManagerImpl();
+            MiddlewareImpl obj = new MiddlewareImpl();
             // dynamically generate the stub (client proxy)
-            ResourceManager rm = (ResourceManager) UnicastRemoteObject.exportObject(obj, 0);
+            ResourceManager mw = (ResourceManager) UnicastRemoteObject.exportObject(obj, 0);
 
             // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.getRegistry(port);
-            registry.rebind("group_7_pawel", rm);
+            //Registry registryMiddle = LocateRegistry.getRegistry(port);
+            Registry registryMiddle = LocateRegistry.createRegistry(port);
+            registryMiddle.rebind("group_7_middle", mw);
 
             System.err.println("Server ready");
+            
+            /**
+             * CONNECT TO RM SERVERS AS A CLIENT
+             * 
+             * note: registry might overwrite something - may need to have two registry objects?
+             */
+            
+            // get the proxy and the remote reference by rmiregistry lookup
+            Registry registryRM = LocateRegistry.getRegistry(rmserver, rmport);
+            rm = (ResourceManager) registryRM.lookup("group_7_RM");
+            if(rm!=null)
+            {
+                System.out.println("Successful");
+                System.out.println("Connected to RM(s)");
+            }
+            else
+            {
+                System.out.println("Unsuccessful");
+            }
+            // make call on remote method
+            
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
@@ -48,6 +84,9 @@ public class MiddlewareImplementation implements ResourceManager {
             System.setSecurityManager(new RMISecurityManager());
         }
 	}
+	
+	public MiddlewareImpl() throws RemoteException {
+    }
 	
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats,

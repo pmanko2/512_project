@@ -1,4 +1,4 @@
-grant codeBase "file:/home/2011/nwebst1/workspace/COMP_512/src/client" {
+grant codeBase "file:/Users/nic/Documents/Development/workspace/512_project/src/client/" {
     permission java.security.AllPermission;
 };
 
