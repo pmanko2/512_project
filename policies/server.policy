@@ -1,0 +1,5 @@
+grant codeBase "file:/home/2011/nwebst1/workspace/COMP_512/src/" {
+    permission java.security.AllPermission;
+};
+
+

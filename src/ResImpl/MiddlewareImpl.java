@@ -1,10 +1,12 @@
-package MWS;
+package ResImpl;
 
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.Vector;
 
 import ResInterface.ResourceManager;
@@ -20,6 +22,8 @@ public class MiddlewareImpl implements ResourceManager {
     //this references the RM server for rooms
     static ResourceManager rooms_rm = null;
 
+
+	protected RMHashtable m_itemHT = new RMHashtable();
 
 	public static void main(String[] args)
 	{
@@ -148,6 +152,30 @@ public class MiddlewareImpl implements ResourceManager {
 	public MiddlewareImpl() throws RemoteException {
     }
 	
+    // Reads a data item
+    private RMItem readData( int id, String key )
+    {
+        synchronized(m_itemHT) {
+            return (RMItem) m_itemHT.get(key);
+        }
+    }
+
+    // Writes a data item
+    @SuppressWarnings("unchecked")
+    private void writeData( int id, String key, RMItem value )
+    {
+        synchronized(m_itemHT) {
+            m_itemHT.put(key, value);
+        }
+    }
+    
+    // Remove the item out of storage
+    protected RMItem removeData(int id, String key) {
+        synchronized(m_itemHT) {
+            return (RMItem)m_itemHT.remove(key);
+        }
+    }
+	
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException {
@@ -169,17 +197,39 @@ public class MiddlewareImpl implements ResourceManager {
 		return rooms_rm.addRooms(id, location, numRooms, price);
 	}
 
-	@Override
-	public int newCustomer(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	// customer functions
+    // new customer just returns a unique customer identifier
+    
+    public int newCustomer(int id)
+        throws RemoteException
+    {
+        Trace.info("INFO: RM::newCustomer(" + id + ") called" );
+        // Generate a globally unique ID for the new customer
+        int cid = Integer.parseInt( String.valueOf(id) +
+                                String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
+                                String.valueOf( Math.round( Math.random() * 100 + 1 )));
+        Customer cust = new Customer( cid );
+        writeData( id, cust.getKey(), cust );
+        Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid );
+        return cid;
+    }
 
-	@Override
-	public boolean newCustomer(int id, int cid) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    // I opted to pass in customerID instead. This makes testing easier
+    public boolean newCustomer(int id, int customerID )
+        throws RemoteException
+    {
+        Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") called" );
+        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+        if ( cust == null ) {
+            cust = new Customer(customerID);
+            writeData( id, cust.getKey(), cust );
+            Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") created a new customer" );
+            return true;
+        } else {
+            Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") failed--customer already exists");
+            return false;
+        } // else
+    }
 
 	@Override
 	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
@@ -199,11 +249,37 @@ public class MiddlewareImpl implements ResourceManager {
 		return rooms_rm.deleteRooms(id, location);
 	}
 
-	@Override
-	public boolean deleteCustomer(int id, int customer) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	 // Deletes customer from the database. 
+    @SuppressWarnings("rawtypes")
+	public boolean deleteCustomer(int id, int customerID)
+        throws RemoteException
+    {
+        Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
+        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+        if ( cust == null ) {
+            Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+            return false;
+        } else {            
+            // Increase the reserved numbers of all reservable items which the customer reserved. 
+            RMHashtable reservationHT = cust.getReservations();
+            for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
+                String reservedkey = (String) (e.nextElement());
+                ReservedItem reserveditem = cust.getReservedItem(reservedkey);
+                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
+                ReservableItem item  = (ReservableItem) readData(id, reserveditem.getKey());
+                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+                item.setReserved(item.getReserved()-reserveditem.getCount());
+                item.setCount(item.getCount()+reserveditem.getCount());
+            }
+            
+            // remove the customer from the storage
+            removeData(id, cust.getKey());
+            
+            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
+            return true;
+        } // if
+    }
+
 
 	@Override
 	public int queryFlight(int id, int flightNumber) throws RemoteException {
@@ -223,12 +299,23 @@ public class MiddlewareImpl implements ResourceManager {
 		return rooms_rm.queryRooms(id, location);
 	}
 
-	@Override
-	public String queryCustomerInfo(int id, int customer)
-			throws RemoteException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	   // return a bill
+    public String queryCustomerInfo(int id, int customerID)
+        throws RemoteException
+    {
+        Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + ") called" );
+        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+        if ( cust == null ) {
+            Trace.warn("RM::queryCustomerInfo(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+            return "";   // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
+        } else {
+                String s = cust.printBill();
+                Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + "), bill follows..." );
+                System.out.println( s );
+                return s;
+        } // if
+    }
+
 
 	@Override
 	public int queryFlightPrice(int id, int flightNumber)
@@ -276,6 +363,22 @@ public class MiddlewareImpl implements ResourceManager {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	
+    // Returns data structure containing customer reservation info. Returns null if the
+    //  customer doesn't exist. Returns empty RMHashtable if customer exists but has no
+    //  reservations.
+    public RMHashtable getCustomerReservations(int id, int customerID)
+        throws RemoteException
+    {
+        Trace.info("RM::getCustomerReservations(" + id + ", " + customerID + ") called" );
+        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+        if ( cust == null ) {
+            Trace.warn("RM::getCustomerReservations failed(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+            return null;
+        } else {
+            return cust.getReservations();
+        } // if
+    }
 
 
 }
