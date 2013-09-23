@@ -1,10 +1,10 @@
 package client;
 
 import ResInterface.*;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RMISecurityManager;
-
 import java.util.*;
 import java.io.*;
 
@@ -15,7 +15,8 @@ public class client
     //this references a Middleware Object
     static ResourceManager rm = null;
 
-    public static void main(String args[])
+    @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
+	public static void main(String args[])
     {
         client obj = new client();
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -549,8 +550,7 @@ public class client
             }
             System.out.println("Quitting client.");
             System.exit(1);
-            
-            
+                        
         case 22:  //new Customer given id
             if(arguments.size()!=3){
             obj.wrongNumber();
@@ -577,7 +577,8 @@ public class client
         }//end of while(true)
     }
         
-    public Vector parse(String command)
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public Vector parse(String command)
     {
     Vector arguments = new Vector();
     StringTokenizer tokenizer = new StringTokenizer(command,",");

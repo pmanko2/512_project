@@ -1,13 +1,19 @@
 // -------------------------------
 // adapted from Kevin T. Manley
+
 // CSE 593
 //
+/**
+ * Added a few suppresswarnings to clean up compile time
+ * (I'm putting faith in whoever wrote this class for now).
+ * If there's time, may parameterize the offending objects.
+ * -Nicolas
+ */
 package ResImpl;
 
 import ResInterface.*;
 
 import java.util.*;
-
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
@@ -16,8 +22,8 @@ import java.rmi.RMISecurityManager;
 
 public class ResourceManagerImpl implements ResourceManager 
 {
-    
-    protected RMHashtable m_itemHT = new RMHashtable();
+
+	protected RMHashtable m_itemHT = new RMHashtable();
 
 
     public static void main(String args[]) {
@@ -26,9 +32,8 @@ public class ResourceManagerImpl implements ResourceManager
         int port = 7707;
 
         if (args.length == 1) {
-           // server = server + ":" + args[0];
-            //port = Integer.parseInt(args[0]);
-        		server = args[0];
+            server = server + ":" + args[0];
+            port = Integer.parseInt(args[0]);
         } else if (args.length != 0 &&  args.length != 1) {
             System.err.println ("Wrong usage");
             System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
@@ -72,6 +77,7 @@ public class ResourceManagerImpl implements ResourceManager
     }
 
     // Writes a data item
+    @SuppressWarnings("unchecked")
     private void writeData( int id, String key, RMItem value )
     {
         synchronized(m_itemHT) {
@@ -397,7 +403,8 @@ public class ResourceManagerImpl implements ResourceManager
 
 
     // Deletes customer from the database. 
-    public boolean deleteCustomer(int id, int customerID)
+    @SuppressWarnings("rawtypes")
+	public boolean deleteCustomer(int id, int customerID)
         throws RemoteException
     {
         Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
@@ -469,7 +476,8 @@ public class ResourceManagerImpl implements ResourceManager
     }
     
     // Reserve an itinerary 
-    public boolean itinerary(int id,int customer,Vector flightNumbers,String location,boolean Car,boolean Room)
+    @SuppressWarnings("rawtypes")
+	public boolean itinerary(int id,int customer,Vector flightNumbers,String location,boolean Car,boolean Room)
         throws RemoteException
     {
         return false;

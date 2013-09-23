@@ -11,8 +11,14 @@ import ResInterface.ResourceManager;
 
 public class MiddlewareImpl implements ResourceManager {
 	
-    //this references an RM Object (NOT Middleware)
-    static ResourceManager rm = null;
+    //this references the RM server for cars
+    static ResourceManager cars_rm = null;
+    
+    //this references the RM server for flights
+    static ResourceManager flights_rm = null;
+    
+    //this references the RM server for rooms
+    static ResourceManager rooms_rm = null;
 
 
 	public static void main(String[] args)
@@ -25,8 +31,15 @@ public class MiddlewareImpl implements ResourceManager {
          */
         int port = 8807;
         
-        String rmserver = "lab2-10";
-        int rmport = 7707;
+        /**
+         * RM SERVERS (hard-coded for now - soon this will be command line options
+         */
+        String cars_server = "lab2-10.cs.mcgill.ca";        
+        String flights_server = "lab2-11.cs.mcgill.ca";
+        String rooms_server = "lab2-12.cs.mcgill.ca";
+        
+        int rm_port = 7707;
+
 
         if (args.length == 1) {
             server = server + ":" + args[0];
@@ -60,13 +73,22 @@ public class MiddlewareImpl implements ResourceManager {
              * note: registry might overwrite something - may need to have two registry objects?
              */
             
-            // get the proxy and the remote reference by rmiregistry lookup
-            Registry registryRM = LocateRegistry.getRegistry(rmserver, rmport);
-            rm = (ResourceManager) registryRM.lookup("group_7_RM");
-            if(rm!=null)
+            // get the proxy and the remote reference by rmiregistry lookup for the cars server
+            Registry registry_cars = LocateRegistry.getRegistry(cars_server, rm_port);
+            cars_rm = (ResourceManager) registry_cars.lookup("group_7_RM");
+            
+            // get the proxy and the remote reference by rmiregistry lookup for the flights server
+            Registry registry_flights = LocateRegistry.getRegistry(flights_server, rm_port);
+            flights_rm = (ResourceManager) registry_flights.lookup("group_7_RM");
+            
+            // get the proxy and the remote reference by rmiregistry lookup for the rooms server
+            Registry registry_rooms = LocateRegistry.getRegistry(rooms_server, rm_port);
+            rooms_rm = (ResourceManager) registry_rooms.lookup("group_7_RM");
+            
+            if(cars_rm!=null && flights_rm!=null && rooms_rm!=null)
             {
                 System.out.println("Successful");
-                System.out.println("Connected to RM(s)");
+                System.out.println("Connected to RMs");
             }
             else
             {
@@ -91,22 +113,22 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+			
+		return flights_rm.addFlight(id, flightNum, flightSeats, flightPrice);
 	}
 
 	@Override
 	public boolean addCars(int id, String location, int numCars, int price)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+		
+		return cars_rm.addCars(id, location, numCars, price);
 	}
 
 	@Override
 	public boolean addRooms(int id, String location, int numRooms, int price)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return rooms_rm.addRooms(id, location, numRooms, price);
 	}
 
 	@Override
@@ -123,20 +145,20 @@ public class MiddlewareImpl implements ResourceManager {
 
 	@Override
 	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return flights_rm.deleteFlight(id, flightNum);
 	}
 
 	@Override
 	public boolean deleteCars(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return cars_rm.deleteCars(id, location);
 	}
 
 	@Override
 	public boolean deleteRooms(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return rooms_rm.deleteRooms(id, location);
 	}
 
 	@Override
@@ -147,20 +169,20 @@ public class MiddlewareImpl implements ResourceManager {
 
 	@Override
 	public int queryFlight(int id, int flightNumber) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return flights_rm.queryFlight(id, flightNumber);
 	}
 
 	@Override
 	public int queryCars(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return cars_rm.queryCars(id, location);
 	}
 
 	@Override
 	public int queryRooms(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return rooms_rm.queryRooms(id, location);
 	}
 
 	@Override
@@ -173,41 +195,41 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryFlightPrice(int id, int flightNumber)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return flights_rm.queryFlightPrice(id, flightNumber);
 	}
 
 	@Override
 	public int queryCarsPrice(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return cars_rm.queryCarsPrice(id, location);
 	}
 
 	@Override
 	public int queryRoomsPrice(int id, String location) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+		return rooms_rm.queryRoomsPrice(id, location);
 	}
 
 	@Override
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return flights_rm.reserveFlight(id, customer, flightNumber);
 	}
 
 	@Override
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return cars_rm.reserveCar(id, customer, location);
 	}
 
 	@Override
 	public boolean reserveRoom(int id, int customer, String locationd)
 			throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+
+		return rooms_rm.reserveRoom(id, customer, locationd);
 	}
 
 	@Override
