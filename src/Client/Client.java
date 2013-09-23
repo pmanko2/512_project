@@ -1,4 +1,4 @@
-package client;
+package Client;
 
 import ResInterface.*;
 
@@ -9,7 +9,7 @@ import java.util.*;
 import java.io.*;
 
     
-public class client
+public class Client
 {
     static String message = "blank";
     //this references a Middleware Object
@@ -18,7 +18,7 @@ public class client
     @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
 	public static void main(String args[])
     {
-        client obj = new client();
+        Client obj = new Client();
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         String command = "";
         Vector arguments  = new Vector();
@@ -34,7 +34,7 @@ public class client
         String location;
 
 
-        String server = "teaching";
+        String server = "localhost";
        // int port = 1099;
         int port = 8807;
         if (args.length > 0)
