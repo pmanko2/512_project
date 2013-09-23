@@ -32,7 +32,7 @@ public class MiddlewareImpl implements ResourceManager {
         int port = 8807;
         
         /**
-         * RM SERVERS (hard-coded for now - soon this will be command line options
+         * RM SERVERS
          */
         String cars_server = "lab2-10.cs.mcgill.ca";        
         String flights_server = "lab2-11.cs.mcgill.ca";
@@ -41,12 +41,50 @@ public class MiddlewareImpl implements ResourceManager {
         int rm_port = 7707;
 
 
+        //if one args, this should be a port #
         if (args.length == 1) {
             server = server + ":" + args[0];
-            port = Integer.parseInt(args[0]);
-        } else if (args.length != 0 &&  args.length != 1) {
-            System.err.println ("Wrong usage");
-            System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
+            try {
+            	rm_port = Integer.parseInt(args[0]);
+            }
+            //if the above fails, it probably wasn't a number
+            catch(NumberFormatException e)
+            {
+            	System.err.println("\nWrong usage:");
+            	System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
+            	System.exit(1);
+            }
+        } 
+        //if 3 args, assume that the three arguments are the RM servers
+        else if (args.length == 3) {
+        	cars_server = args[0];
+        	flights_server = args[1];
+        	rooms_server = args[2];
+        }
+        //if 4 args, assume that the first argument is a port number and the other 3
+        //are RM servers
+        else if (args.length == 4)
+        {
+        	server = server + ":" + args[0];
+        	try {
+        		rm_port = Integer.parseInt(args[0]);
+        	}
+        	catch(NumberFormatException e)
+        	{
+        		System.err.println("\nWrong usage:");
+        		System.out.println("Usage: java ResImpl.ResourceManagerImpl [port] [cars_rm_server] [flights_rm_server] [rooms_rm_server]");
+        		System.exit(1);
+        	}
+        	cars_server = args[1];
+        	flights_server = args[2];
+        	rooms_server = args[3];
+        }
+        //unless there were no args (which is okay, this will then use default values)
+        else if (args.length != 0) {
+            System.err.println ("\nWrong usage:");
+            System.out.println("Use case 1: java ResImpl.ResourceManagerImpl");
+            System.out.println("Use case 2: java ResImpl.ResourceManagerImpl [port]");
+            System.out.println("Use case 3: java ResImpl.ResourceManagerImpl [port] [cars_rm_server] [flights_rm_server] [rooms_rm_server]");
             System.exit(1);
         }
         
