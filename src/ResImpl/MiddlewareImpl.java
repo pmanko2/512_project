@@ -24,6 +24,12 @@ public class MiddlewareImpl implements ResourceManager {
 
 
 	protected RMHashtable m_itemHT = new RMHashtable();
+	
+	/**
+	 * Middleware takes care of all reservations - this is due to the inseparability of the 
+	 * information in the Customer class.
+	 * @param args
+	 */
 
 	public static void main(String[] args)
 	{
@@ -58,7 +64,7 @@ public class MiddlewareImpl implements ResourceManager {
             	System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
             	System.exit(1);
             }
-        } 
+        }
         //if 3 args, assume that the three arguments are the RM servers
         else if (args.length == 3) {
         	cars_server = args[0];
@@ -174,6 +180,89 @@ public class MiddlewareImpl implements ResourceManager {
         synchronized(m_itemHT) {
             return (RMItem)m_itemHT.remove(key);
         }
+    }
+    
+    // reserve an item
+    protected boolean reserveItem(int id, int customerID, String key, String location) {
+    	try 
+    	{
+    		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ ", "+location+" ) called" );        
+	        // Read customer object if it exists (and read lock it)
+	        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );        
+	        if ( cust == null ) {
+	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", "+location+")  failed--customer doesn't exist" );
+	            return false;
+	        } 
+	        
+	        //parse key to find out if item is a car, flight, or room
+	        String delims = "[-]";
+	        String[] tokens = key.split(delims);
+	        
+	        ReservableItem item = null;
+	        // check if the item is available
+	        //if it's a flight
+	        if (tokens[0].equals("flight"))
+	        {
+	        	item = flights_rm.getReservableItem(id, key);
+	        }
+	        //else if the item is a car
+	        else if (tokens[0].equals("car"))
+	        {
+	        	item = cars_rm.getReservableItem(id, key);
+	        }
+	        //otherwise it's a room
+	        else
+	        {
+	        	item = rooms_rm.getReservableItem(id, key);
+	        }
+	        
+	        if ( item == null ) {
+	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
+	            return false;
+	        } else if (item.getCount()==0) {
+	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
+	            return false;
+	        } else {            
+	            cust.reserve( key, location, item.getPrice());        
+	            writeData( id, cust.getKey(), cust );
+	            
+	            // decrease the number of available items in the storage
+	            boolean resource_updated = false;
+	            
+	            if (tokens[0].equals("flight"))
+		        {
+	            	resource_updated = flights_rm.itemReserved(id, item);
+		        }
+		        //else if the item is a car
+		        else if (tokens[0].equals("car"))
+		        {
+	            	resource_updated = cars_rm.itemReserved(id, item);
+		        }
+		        //otherwise it's a room
+		        else
+		        {
+	            	resource_updated = rooms_rm.itemReserved(id, item);
+		        }
+
+	            if (resource_updated)
+	            {
+		            Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") succeeded" );
+		            return true;
+	            }
+	            else 
+	            {
+	            	return false;
+	            }
+	        } 
+    	} catch (RemoteException e) {
+    		e.printStackTrace();
+    		return false;
+    	}
+    }
+    
+    private void checkItem(ReservableItem item)
+    {
+    	
     }
 	
 	@Override
@@ -339,22 +428,23 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
-
-		return flights_rm.reserveFlight(id, customer, flightNumber);
+			
+		System.out.println(Flight.getKey(flightNumber) + " " + String.valueOf(flightNumber));
+        return reserveItem(id, customer, Flight.getKey(flightNumber), String.valueOf(flightNumber));
 	}
 
 	@Override
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException {
 
-		return cars_rm.reserveCar(id, customer, location);
+        return reserveItem(id, customer, Car.getKey(location), location);
 	}
 
 	@Override
-	public boolean reserveRoom(int id, int customer, String locationd)
+	public boolean reserveRoom(int id, int customer, String location)
 			throws RemoteException {
 
-		return rooms_rm.reserveRoom(id, customer, locationd);
+        return reserveItem(id, customer, Hotel.getKey(location), location);
 	}
 
 	@Override
@@ -379,6 +469,18 @@ public class MiddlewareImpl implements ResourceManager {
             return cust.getReservations();
         } // if
     }
+
+	@Override
+	public ReservableItem getReservableItem(int id, String key)
+			throws RemoteException {
+		return null;
+	}
+
+	@Override
+	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 
 }

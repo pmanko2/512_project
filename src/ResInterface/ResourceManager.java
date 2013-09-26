@@ -3,8 +3,9 @@ package ResInterface;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-
 import java.util.*;
+
+import ResImpl.ReservableItem;
 /** 
  * Simplified version from CSE 593 Univ. of Washington
  *
@@ -131,5 +132,16 @@ public interface ResourceManager extends Remote
     /* reserve an itinerary */
     public boolean itinerary(int id,int customer,Vector flightNumbers,String location, boolean Car, boolean Room)
 	throws RemoteException; 
+    
+    /**
+     * The following two methods were added to facilitate reservations
+     */
+    //get the reservable item described by key
+    public ReservableItem getReservableItem(int id, String key) 
+    throws RemoteException;
+    
+    //this is called once an item is reserved - this updates the availability of the item
+    public boolean itemReserved(int id, ReservableItem item)
+    throws RemoteException;
     			
 }

@@ -34,7 +34,7 @@ public class Client
         String location;
 
 
-        String server = "localhost";
+        String server = "teaching.cs.mcgill.ca";
        // int port = 1099;
         int port = 8807;
         if (args.length > 0)
@@ -647,7 +647,7 @@ public class Client
     System.out.println("\nWelcome to the client interface provided to test your project.");
     System.out.println("Commands accepted by the interface are:");
     System.out.println("help");
-    System.out.println("newflight\nnewcar\nnewroom\nnewcustomer\nnewcusomterid\ndeleteflight\ndeletecar\ndeleteroom");
+    System.out.println("newflight\nnewcar\nnewroom\nnewcustomer\nnewcustomerid\ndeleteflight\ndeletecar\ndeleteroom");
     System.out.println("deletecustomer\nqueryflight\nquerycar\nqueryroom\nquerycustomer");
     System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
     System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");

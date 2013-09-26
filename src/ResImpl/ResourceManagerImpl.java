@@ -52,7 +52,7 @@ public class ResourceManagerImpl implements ResourceManager
             Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("group_7_RM", rm);
 
-            System.err.println("Server ready");
+            System.out.println("Server ready");
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
@@ -170,6 +170,29 @@ public class ResourceManagerImpl implements ResourceManager
             return true;
         }        
     }
+    
+    /**
+     * Added 25/09/13 - returns a reservable item (so that Middleware can manage reservations without 
+     * providing customer data to RMs or needing to manage inventory
+     */
+    public ReservableItem getReservableItem(int id, String key)
+    {
+    	return (ReservableItem)readData(id, key);
+    }
+    
+	/**
+	 * Method updates object's availability after it has been reserved in the Middleware 
+	 */
+	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
+
+        ReservableItem item_to_update = (ReservableItem)readData(id, item.getKey());
+	
+        // decrease the number of available items in the storage
+        item_to_update.setCount(item_to_update.getCount() - 1);
+        item_to_update.setReserved(item_to_update.getReserved()+1);
+		return true;
+	}
+
     
     // Create a new flight, or add seats to existing flight
     //  NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
@@ -482,5 +505,4 @@ public class ResourceManagerImpl implements ResourceManager
     {
         return false;
     }
-
 }
