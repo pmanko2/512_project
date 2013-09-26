@@ -7,6 +7,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 import ResInterface.ResourceManager;
@@ -260,7 +261,8 @@ public class MiddlewareImpl implements ResourceManager {
     	}
     }
     
-    private void checkItem(ReservableItem item)
+    @SuppressWarnings("unused")
+	private void checkItem(ReservableItem item)
     {
     	
     }
@@ -429,7 +431,6 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
 			
-		System.out.println(Flight.getKey(flightNumber) + " " + String.valueOf(flightNumber));
         return reserveItem(id, customer, Flight.getKey(flightNumber), String.valueOf(flightNumber));
 	}
 
@@ -447,11 +448,35 @@ public class MiddlewareImpl implements ResourceManager {
         return reserveItem(id, customer, Hotel.getKey(location), location);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
-			String location, boolean Car, boolean Room) throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
+			String location, boolean car, boolean room) throws RemoteException {
+
+		boolean confirmation = true;
+		
+    	//for each flight in flightNumbers, reserve flight
+		Iterator i = flightNumbers.iterator();
+		while (i.hasNext())
+		{
+			Object flight_number_object = i.next();
+			int flightNumberInt = Integer.parseInt(flight_number_object.toString());
+			confirmation = reserveItem(id, customer, Flight.getKey(flightNumberInt), String.valueOf(flightNumberInt));
+		}
+		
+		//if there was a car to be reserved as well
+		if (car)
+		{
+			confirmation = reserveItem(id, customer, Car.getKey(location), location);
+		}
+		
+		//if there was a room to be reserved as well
+		if (room)
+		{
+			confirmation = reserveItem(id, customer, Hotel.getKey(location), location);
+		}
+		
+		return confirmation;
 	}
 	
     // Returns data structure containing customer reservation info. Returns null if the
