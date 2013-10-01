@@ -357,7 +357,30 @@ public class MiddlewareImpl implements ResourceManager {
                 String reservedkey = (String) (e.nextElement());
                 ReservedItem reserveditem = cust.getReservedItem(reservedkey);
                 Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
-                ReservableItem item  = (ReservableItem) readData(id, reserveditem.getKey());
+
+                //determine whether this item is a flight,room, or car
+                String key = reserveditem.getKey();  
+                String delims = "[-]";
+    	        String[] tokens = key.split(delims);
+    	        
+    	        ReservableItem item = null;
+    	        // check if the item is available
+    	        //if it's a flight
+    	        if (tokens[0].equals("flight"))
+    	        {
+    	        	item = flights_rm.getReservableItem(id, key);
+    	        }
+    	        //else if the item is a car
+    	        else if (tokens[0].equals("car"))
+    	        {
+    	        	item = cars_rm.getReservableItem(id, key);
+    	        }
+    	        //otherwise it's a room
+    	        else
+    	        {
+    	        	item = rooms_rm.getReservableItem(id, key);
+    	        }
+                
                 Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
                 item.setReserved(item.getReserved()-reserveditem.getCount());
                 item.setCount(item.getCount()+reserveditem.getCount());
