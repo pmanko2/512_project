@@ -192,6 +192,22 @@ public class ResourceManagerImpl implements ResourceManager
         item_to_update.setReserved(item_to_update.getReserved()+1);
 		return true;
 	}
+	
+	/**
+	 * Method used when a customer is deleted - this method frees up the resources 
+	 * of that customer
+	 * @param id
+	 * @param item
+	 * @return
+	 * @throws RemoteException
+	 */
+	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) throws RemoteException {
+        ReservableItem item = getReservableItem(id, key);
+		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+        item.setReserved(item.getReserved()-reserveditem.getCount());
+        item.setCount(item.getCount()+reserveditem.getCount());
+        return;
+	}
 
     
     // Create a new flight, or add seats to existing flight
@@ -295,7 +311,38 @@ public class ResourceManagerImpl implements ResourceManager
 
 
 
-    // Returns the number of empty seats on this flight
+    // Deletes customer from the database. 
+	@SuppressWarnings("rawtypes")
+	public boolean deleteCustomer(int id, int customerID)
+	    throws RemoteException
+	{
+	    Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
+	    Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+	    if ( cust == null ) {
+	        Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+	        return false;
+	    } else {            
+	        // Increase the reserved numbers of all reservable items which the customer reserved. 
+	        RMHashtable reservationHT = cust.getReservations();
+	        for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
+	            String reservedkey = (String) (e.nextElement());
+	            ReservedItem reserveditem = cust.getReservedItem(reservedkey);
+	            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
+	            ReservableItem item  = (ReservableItem) readData(id, reserveditem.getKey());
+	            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
+	            item.setReserved(item.getReserved()-reserveditem.getCount());
+	            item.setCount(item.getCount()+reserveditem.getCount());
+	        }
+	        
+	        // remove the customer from the storage
+	        removeData(id, cust.getKey());
+	        
+	        Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
+	        return true;
+	    } // if
+	}
+
+	// Returns the number of empty seats on this flight
     public int queryFlight(int id, int flightNum)
         throws RemoteException
     {
@@ -425,36 +472,7 @@ public class ResourceManagerImpl implements ResourceManager
     }
 
 
-    // Deletes customer from the database. 
-    @SuppressWarnings("rawtypes")
-	public boolean deleteCustomer(int id, int customerID)
-        throws RemoteException
-    {
-        Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
-        if ( cust == null ) {
-            Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return false;
-        } else {            
-            // Increase the reserved numbers of all reservable items which the customer reserved. 
-            RMHashtable reservationHT = cust.getReservations();
-            for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
-                String reservedkey = (String) (e.nextElement());
-                ReservedItem reserveditem = cust.getReservedItem(reservedkey);
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
-                ReservableItem item  = (ReservableItem) readData(id, reserveditem.getKey());
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-                item.setReserved(item.getReserved()-reserveditem.getCount());
-                item.setCount(item.getCount()+reserveditem.getCount());
-            }
-            
-            // remove the customer from the storage
-            removeData(id, cust.getKey());
-            
-            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
-            return true;
-        } // if
-    }
+    
 
 
 

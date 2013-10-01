@@ -368,22 +368,18 @@ public class MiddlewareImpl implements ResourceManager {
     	        //if it's a flight
     	        if (tokens[0].equals("flight"))
     	        {
-    	        	item = flights_rm.getReservableItem(id, key);
+    	        	flights_rm.itemUnReserved(id, customerID, key, reserveditem);
     	        }
     	        //else if the item is a car
     	        else if (tokens[0].equals("car"))
     	        {
-    	        	item = cars_rm.getReservableItem(id, key);
+    	        	cars_rm.itemUnReserved(id, customerID, key, reserveditem);
     	        }
     	        //otherwise it's a room
     	        else
     	        {
-    	        	item = rooms_rm.getReservableItem(id, key);
-    	        }
-                
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-                item.setReserved(item.getReserved()-reserveditem.getCount());
-                item.setCount(item.getCount()+reserveditem.getCount());
+    	        	rooms_rm.itemUnReserved(id, customerID, key, reserveditem);
+    	        }              
             }
             
             // remove the customer from the storage
@@ -528,6 +524,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void itemUnReserved(int id, int customerID, String key,
+			ReservedItem reserveditem) throws RemoteException {
+		// TODO Auto-generated method stub
+		
 	}
 
 

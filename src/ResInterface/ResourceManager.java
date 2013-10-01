@@ -6,6 +6,8 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 import ResImpl.ReservableItem;
+import ResImpl.ReservedItem;
+import ResImpl.Trace;
 /** 
  * Simplified version from CSE 593 Univ. of Washington
  *
@@ -144,4 +146,14 @@ public interface ResourceManager extends Remote
     public boolean itemReserved(int id, ReservableItem item)
     throws RemoteException;
     			
+	/**
+	 * Method used when a customer is deleted - this method frees up the resources 
+	 * of that customer
+	 * @param id
+	 * @param item
+	 * @return
+	 * @throws RemoteException
+	 */
+	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) 
+	throws RemoteException;
 }
