@@ -217,6 +217,10 @@ public class MiddlewareImpl implements ResourceManager {
 	        	item = rooms_rm.getReservableItem(id, key);
 	        }
 	        
+	        
+	        //add sync block
+	        
+	        
 	        if ( item == null ) {
 	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
 	            return false;
@@ -325,7 +329,9 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
 
+		//sync on smae lock as reserve item
 		return flights_rm.deleteFlight(id, flightNum);
+		
 	}
 
 	@Override
