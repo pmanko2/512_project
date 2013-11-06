@@ -5,24 +5,32 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.transaction.InvalidTransactionException;
+
 import ResInterface.ResourceManager;
+import TransactionManager.OP_CODE;
+import TransactionManager.TransactionAbortedException;
+import TransactionManager.TransactionManager;
 
 public class MiddlewareImpl implements ResourceManager {
 	
     //this references the RM server for cars
-    static ResourceManager cars_rm = null;
+    private static ResourceManager cars_rm = null;
     
     //this references the RM server for flights
-    static ResourceManager flights_rm = null;
+    private static ResourceManager flights_rm = null;
     
     //this references the RM server for rooms
-    static ResourceManager rooms_rm = null;
+    private static ResourceManager rooms_rm = null;
 
+    //this references the transaction manager object
+    private static TransactionManager tm = null;
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	
@@ -45,9 +53,9 @@ public class MiddlewareImpl implements ResourceManager {
         /**
          * RM SERVERS
          */
-        String cars_server = "lab2-10.cs.mcgill.ca";        
+        String cars_server = "lab2-1.cs.mcgill.ca";        
         String flights_server = "lab2-11.cs.mcgill.ca";
-        String rooms_server = "lab2-12.cs.mcgill.ca";
+        String rooms_server = "lab2-14.cs.mcgill.ca";
         
         int rm_port = 7707;
 
@@ -134,6 +142,9 @@ public class MiddlewareImpl implements ResourceManager {
             Registry registry_rooms = LocateRegistry.getRegistry(rooms_server, rm_port);
             rooms_rm = (ResourceManager) registry_rooms.lookup("group_7_RM");
             
+            //create the transactionmanager object
+            tm = new TransactionManager();
+            
             if(cars_rm!=null && flights_rm!=null && rooms_rm!=null)
             {
                 System.out.println("Successful");
@@ -157,6 +168,31 @@ public class MiddlewareImpl implements ResourceManager {
 	}
 	
 	public MiddlewareImpl() throws RemoteException {
+		
+    }
+	
+	/**
+	 * start a new transaction for the caller
+	 */
+   public int start() throws RemoteException
+    {
+	   return tm.start();
+    }
+    
+    /**
+     * Commit transaction with id transaction_id
+     */
+    public boolean commit(int transaction_id) throws RemoteException, TransactionAbortedException, InvalidTransactionException
+    {
+    	return tm.commit(transaction_id);
+    }
+    
+    /**
+     * Abort transaction with id transaction_id
+     */
+    public void abort(int transaction_id) throws RemoteException, InvalidTransactionException
+    {
+    	tm.abort(transaction_id);
     }
 	
     // Reads a data item
@@ -275,7 +311,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException {
 			
-		return flights_rm.addFlight(id, flightNum, flightSeats, flightPrice);
+		ArrayList<Object> args = new ArrayList<Object>();
+		args.add(flightNum);
+		args.add(flightSeats);
+		args.add(flightPrice);
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args);
 	}
 
 	@Override
@@ -369,7 +411,7 @@ public class MiddlewareImpl implements ResourceManager {
                 String delims = "[-]";
     	        String[] tokens = key.split(delims);
     	        
-    	        ReservableItem item = null;
+    	
     	        // check if the item is available
     	        //if it's a flight
     	        if (tokens[0].equals("flight"))
@@ -528,14 +570,12 @@ public class MiddlewareImpl implements ResourceManager {
 
 	@Override
 	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void itemUnReserved(int id, int customerID, String key,
 			ReservedItem reserveditem) throws RemoteException {
-		// TODO Auto-generated method stub
 		
 	}
 

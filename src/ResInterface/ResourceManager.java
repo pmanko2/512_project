@@ -5,9 +5,14 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.*;
 
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.TransactionRequiredException;
+
+import ResImpl.RMItem;
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
-import ResImpl.Trace;
+import TransactionManager.TransactionAbortedException;
+
 /** 
  * Simplified version from CSE 593 Univ. of Washington
  *
@@ -26,6 +31,15 @@ import ResImpl.Trace;
 
 public interface ResourceManager extends Remote 
 {
+	public int start()
+	throws RemoteException;
+	
+	public boolean commit(int transaction_id)
+	throws RemoteException, TransactionAbortedException, InvalidTransactionException;
+	
+	public void abort(int transaction_id)
+	throws RemoteException, InvalidTransactionException;
+	
     /* Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.
      * Adding to an existing flight should overwrite the current price of the

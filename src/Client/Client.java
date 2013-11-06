@@ -14,14 +14,16 @@ public class Client
     static String message = "blank";
     //this references a Middleware Object
     static ResourceManager rm = null;
+    private static int CURRENT_TRXN;
 
-    @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
+	@SuppressWarnings("unchecked")
 	public static void main(String args[])
     {
         Client obj = new Client();
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
         String command = "";
-        Vector arguments  = new Vector();
+        @SuppressWarnings("rawtypes")
+		Vector arguments  = new Vector();
         int Id, Cid;
         int flightNum;
         int flightPrice;
@@ -110,8 +112,8 @@ public class Client
             
         case 2:  //new flight
             if(arguments.size()!=5){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Adding a new Flight using id: "+arguments.elementAt(1));
             System.out.println("Flight number: "+arguments.elementAt(2));
@@ -119,14 +121,30 @@ public class Client
             System.out.println("Set Flight Price: "+arguments.elementAt(4));
             
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            flightNum = obj.getInt(arguments.elementAt(2));
-            flightSeats = obj.getInt(arguments.elementAt(3));
-            flightPrice = obj.getInt(arguments.elementAt(4));
-            if(rm.addFlight(Id,flightNum,flightSeats,flightPrice))
-                System.out.println("Flight added");
-            else
-                System.out.println("Flight could not be added");
+            	CURRENT_TRXN = rm.start();
+                
+	            Id = CURRENT_TRXN;
+	            flightNum = obj.getInt(arguments.elementAt(2));
+	            flightSeats = obj.getInt(arguments.elementAt(3));
+	            flightPrice = obj.getInt(arguments.elementAt(4));
+	            
+	            if(rm.addFlight(Id,flightNum,flightSeats,flightPrice))
+	            {
+	                if (rm.commit(CURRENT_TRXN))
+	                {
+	                	System.out.println("Flight added");
+	                }
+	                else
+	                {
+	                	rm.abort(CURRENT_TRXN);
+		                System.out.println("Flight could not be added. Please try again.");
+	                }
+            	}
+	            else
+	            {
+	                System.out.println("Flight could not be added");
+	            	rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
             System.out.println("EXCEPTION:");
@@ -524,7 +542,8 @@ public class Client
             try{
             Id = obj.getInt(arguments.elementAt(1));
             int customer = obj.getInt(arguments.elementAt(2));
-            Vector flightNumbers = new Vector();
+            @SuppressWarnings("rawtypes")
+			Vector flightNumbers = new Vector();
             for(int i=0;i<arguments.size()-6;i++)
                 flightNumbers.addElement(arguments.elementAt(3+i));
             location = obj.getString(arguments.elementAt(arguments.size()-3));
@@ -553,20 +572,20 @@ public class Client
                         
         case 22:  //new Customer given id
             if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Adding a new Customer using id:"+arguments.elementAt(1) + " and cid " +arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            Cid = obj.getInt(arguments.elementAt(2));
-            boolean customer=rm.newCustomer(Id,Cid);
-            System.out.println("new customer id:"+Cid);
+	            Id = obj.getInt(arguments.elementAt(1));
+	            Cid = obj.getInt(arguments.elementAt(2));
+	            boolean customer=rm.newCustomer(Id,Cid);
+	            System.out.println("new customer id:"+Cid);
             }
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             

@@ -24,7 +24,7 @@ public class ResourceManagerImpl implements ResourceManager
 {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
-
+	private RMHashtable non_committed_items = new RMHashtable();
 
     public static void main(String args[]) {
         // Figure out where server is running
@@ -67,31 +67,49 @@ public class ResourceManagerImpl implements ResourceManager
     public ResourceManagerImpl() throws RemoteException {
     }
      
-
+    public int start()
+    {
+    	return -1;
+    }
+    
+    /**
+     * Commit operation with ID
+     */
+    public boolean commit(int op_id)
+    {
+    	RMItem item =(RMItem)non_committed_items.get("" + op_id);
+    	writeData(op_id, item.getKey(), item);
+    	non_committed_items.remove(item.getKey());
+    	return true;
+    }
+    
+    /**
+     * Abort operation with ID
+     */
+    public void abort(int op_id)
+    {
+    	RMItem item = (RMItem) non_committed_items.get("" + op_id);
+    	non_committed_items.remove(item.getKey());
+    }
+    
     // Reads a data item
     private RMItem readData( int id, String key )
     {
-        synchronized(m_itemHT) {
             return (RMItem) m_itemHT.get(key);
-        }
     }
 
     // Writes a data item
     @SuppressWarnings("unchecked")
     private void writeData( int id, String key, RMItem value )
     {
-        synchronized(m_itemHT) {
             m_itemHT.put(key, value);
-        }
     }
     
     // Remove the item out of storage
-    protected RMItem removeData(int id, String key) {
-        synchronized(m_itemHT) {
+    protected RMItem removeData(int id, String key) 
+    {
             return (RMItem)m_itemHT.remove(key);
-        }
     }
-    
     
     // deletes the entire item
     protected boolean deleteItem(int id, String key)
@@ -117,7 +135,8 @@ public class ResourceManagerImpl implements ResourceManager
     
 
     // query the number of available seats/rooms/cars
-    protected int queryNum(int id, String key) {
+    protected int queryNum(int id, String key) 
+    {
         Trace.info("RM::queryNum(" + id + ", " + key + ") called" );
         ReservableItem curObj = (ReservableItem) readData( id, key);
         int value = 0;  
@@ -212,7 +231,8 @@ public class ResourceManagerImpl implements ResourceManager
     
     // Create a new flight, or add seats to existing flight
     //  NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
-    public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice)
+    @SuppressWarnings("unchecked")
+	public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice)
         throws RemoteException
     {
         Trace.info("RM::addFlight(" + id + ", " + flightNum + ", $" + flightPrice + ", " + flightSeats + ") called" );
@@ -220,20 +240,24 @@ public class ResourceManagerImpl implements ResourceManager
         if ( curObj == null ) {
             // doesn't exist...add it
             Flight newObj = new Flight( flightNum, flightSeats, flightPrice );
-            writeData( id, newObj.getKey(), newObj );
+            //writeData( id, newObj.getKey(), newObj );
             Trace.info("RM::addFlight(" + id + ") created new flight " + flightNum + ", seats=" +
                     flightSeats + ", price=$" + flightPrice );
+            non_committed_items.put("" + id, newObj);
+            return true;
         } else {
             // add seats to existing flight and update the price...
             curObj.setCount( curObj.getCount() + flightSeats );
             if ( flightPrice > 0 ) {
                 curObj.setPrice( flightPrice );
             } // if
-            writeData( id, curObj.getKey(), curObj );
+            //writeData( id, curObj.getKey(), curObj );
             Trace.info("RM::addFlight(" + id + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice );
+            non_committed_items.put("" + id, curObj);
+            return true;
         } // else
-        return(true);
     }
+    
 
 
     
@@ -312,11 +336,10 @@ public class ResourceManagerImpl implements ResourceManager
 
 
     // Deletes customer from the database. 
-	@SuppressWarnings("rawtypes")
 	public boolean deleteCustomer(int id, int customerID)
 	    throws RemoteException
 	{
-	    Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
+	   /* Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
 	    Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
 	    if ( cust == null ) {
 	        Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
@@ -339,7 +362,8 @@ public class ResourceManagerImpl implements ResourceManager
 	        
 	        Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
 	        return true;
-	    } // if
+	    } // if*/
+		return false;
 	}
 
 	// Returns the number of empty seats on this flight
