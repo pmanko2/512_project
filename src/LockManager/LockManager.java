@@ -1,5 +1,6 @@
 package LockManager;
 
+
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -64,6 +65,27 @@ public class LockManager
                             // lock conversion 
                             // *** ADD CODE HERE *** to carry out the lock conversion in the
                             // lock table
+                        	// already switched READ to WRITE in dataobj, have to switch in txnobj
+                        	Vector trxVector = this.lockTable.elements(trxnObj);
+                        	int trxSize = trxVector.size();
+                        	
+                        	for(int i = 0; i < trxSize; i++)
+                        	{
+                        		TrxnObj trxnObj2 = (TrxnObj) trxVector.get(i);
+                        		
+                        		if(trxnObj2.getXId() == trxnObj.getXId())
+                        			trxnObj2.lockType = TrxnObj.WRITE;
+                        	}
+                        	
+                        	Vector dataVector = this.lockTable.elements(dataObj);
+                        	
+                        	for(int i = 0; i < dataVector.size(); i++)
+                        	{
+                        		DataObj dataObj2 = (DataObj) dataVector.get(i);
+                        		if(dataObj2.getXId() == dataObj.getXId())
+                        			dataObj2.lockType = DataObj.WRITE;
+                        	}
+                        	
                         } else {
                             // a lock request that is not lock conversion
                             this.lockTable.add(trxnObj);
@@ -203,6 +225,18 @@ public class LockManager
                     // (2) transaction already had a WRITE lock
                     // Seeing the comments at the top of this function might be helpful
                     // *** ADD CODE HERE *** to take care of both these cases
+                	
+                	// if we request another write lock (since transaction already has write lock) this is redundant
+                	// otherwise we indicate the lock needs to be switched
+                	if(dataObj2.getLockType() == DataObj.WRITE)
+                	{
+                		throw new RedundantLockRequestException(dataObj.getXId(), "Redundant WRITE lock request");
+                	}
+                	else
+                	{
+                		bitset.set(0);
+                		return false;
+                	}
                 }
             } 
             else {
