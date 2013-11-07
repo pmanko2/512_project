@@ -8,6 +8,7 @@ import javax.transaction.InvalidTransactionException;
 import LockManager.DeadlockException;
 import LockManager.LockManager;
 import LockManager.TrxnObj;
+import ResImpl.Car;
 import ResImpl.Flight;
 import ResInterface.ResourceManager;
 
@@ -34,19 +35,33 @@ public class Operation {
 	
 	public boolean execute()
 	{
-		try {
+		try 
+		{
+			//string used to hold key for whatever item is being worked with
+			String key;
+
 			switch(operation)
 			{
 				case ADD_FLIGHT:
 					//acquire item key
-					String key = Flight.getKey((Integer)arguments.get(0));
+					key = Flight.getKey((Integer)arguments.get(0));
 					
-					//acquire read lock
+					//acquire write lock
 					lm.Lock(transaction_id, key, TrxnObj.WRITE);
 					
 					//call rm to create a non-committed RMItem
 					return rm.addFlight(OP_ID, (Integer)arguments.get(0), (Integer)arguments.get(1), (Integer)arguments.get(2));
-				
+				case ADD_CARS:
+					//acquire item key
+					key = Car.getKey((String)arguments.get(0));
+					
+					//acquire write lock
+					lm.Lock(transaction_id, key, TrxnObj.WRITE);
+					
+					//call rm to create a non-committed RMItem
+					return rm.addCars(OP_ID, (String)arguments.get(0), (Integer)arguments.get(1), (Integer)arguments.get(2));
+					
+					
 				default:
 					return false;
 			}

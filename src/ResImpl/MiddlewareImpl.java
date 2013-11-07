@@ -323,7 +323,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addCars(int id, String location, int numCars, int price)
 			throws RemoteException {
 		
-		return cars_rm.addCars(id, location, numCars, price);
+		ArrayList<Object> args = new ArrayList<Object>();
+		args.add(location);
+		args.add(numCars);
+		args.add(price);
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args);
 	}
 
 	@Override
