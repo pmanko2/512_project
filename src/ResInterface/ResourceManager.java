@@ -6,12 +6,9 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 import javax.transaction.InvalidTransactionException;
-import javax.transaction.TransactionRequiredException;
 
-import ResImpl.RMItem;
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
-import TransactionManager.TransactionAbortedException;
 
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -35,7 +32,7 @@ public interface ResourceManager extends Remote
 	throws RemoteException;
 	
 	public boolean commit(int transaction_id)
-	throws RemoteException, TransactionAbortedException, InvalidTransactionException;
+	throws RemoteException, InvalidTransactionException;
 	
 	public void abort(int transaction_id)
 	throws RemoteException, InvalidTransactionException;

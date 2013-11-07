@@ -31,8 +31,5 @@ public class RMInteger extends RMItem implements Serializable
 			return String.valueOf(m_value);
 		}
 
-		@Override
-		public String getKey() {
-			return null;
-		}
+
 }

@@ -149,6 +149,7 @@ public class Client
 	            	rm.abort(CURRENT_TRXN);
 	            }
             }
+
             catch(Exception e){
             System.out.println("EXCEPTION:");
             System.out.println(e.getMessage());
