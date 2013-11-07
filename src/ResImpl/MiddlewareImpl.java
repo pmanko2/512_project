@@ -15,7 +15,6 @@ import javax.transaction.InvalidTransactionException;
 
 import ResInterface.ResourceManager;
 import TransactionManager.OP_CODE;
-import TransactionManager.TransactionAbortedException;
 import TransactionManager.TransactionManager;
 
 public class MiddlewareImpl implements ResourceManager {
@@ -182,7 +181,7 @@ public class MiddlewareImpl implements ResourceManager {
     /**
      * Commit transaction with id transaction_id
      */
-    public boolean commit(int transaction_id) throws RemoteException, TransactionAbortedException, InvalidTransactionException
+    public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException
     {
     	return tm.commit(transaction_id);
     }

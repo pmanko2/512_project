@@ -43,8 +43,8 @@ trap control_c SIGINT
 
 start()
 {
-    SERVER_SCRIPT="~/comp512/servercode/runserver.sh && exit"
-    MIDDLEWARE_SCRIPT="~/comp512/servercode/runmiddleware.sh && exit"
+    SERVER_SCRIPT="~/comp512/runserver.sh && exit"
+    MIDDLEWARE_SCRIPT="~/comp512/runmiddleware.sh && exit"
 
     #start up RM servers
     for HOSTNAME in ${SERVER_HOSTS} ; do

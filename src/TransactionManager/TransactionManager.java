@@ -41,7 +41,7 @@ public class TransactionManager {
 		return to_return;
 	}
 	
-	public boolean commit(int transaction_id) throws TransactionAbortedException, InvalidTransactionException
+	public boolean commit(int transaction_id) throws InvalidTransactionException
 	{
 		return transaction_table.get("" + transaction_id).commit();
 	}

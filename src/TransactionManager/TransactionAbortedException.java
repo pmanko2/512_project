@@ -1,14 +1,29 @@
 package TransactionManager;
 
+@SuppressWarnings("serial")
 public class TransactionAbortedException extends Exception {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
 
 	public TransactionAbortedException()
 	{
 		super();
+	}
+	
+	public TransactionAbortedException(String message) 
+	{ 
+		super(message); 
+	}
+	
+	public TransactionAbortedException(String message, Throwable cause) 
+	{ 
+		super(message, cause); 
+	}
+	  
+	public TransactionAbortedException(Throwable cause) 
+	{ 
+		super(cause); 
 	}
 }

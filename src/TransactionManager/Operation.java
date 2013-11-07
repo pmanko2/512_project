@@ -39,13 +39,13 @@ public class Operation {
 			{
 				case ADD_FLIGHT:
 					//acquire item key
-					String key = Flight.getKey((Integer)arguments.get(1));
+					String key = Flight.getKey((Integer)arguments.get(0));
 					
 					//acquire read lock
-					lm.Lock(transaction_id, key, TrxnObj.READ);
+					lm.Lock(transaction_id, key, TrxnObj.WRITE);
 					
 					//call rm to create a non-committed RMItem
-					return rm.addFlight(OP_ID, (Integer)arguments.get(1), (Integer)arguments.get(2), (Integer)arguments.get(3));
+					return rm.addFlight(OP_ID, (Integer)arguments.get(0), (Integer)arguments.get(1), (Integer)arguments.get(2));
 				
 				default:
 					return false;
@@ -59,14 +59,6 @@ public class Operation {
 		}
 		return false;
 	}
-	/**
-	 * Returns a string key representing the data object necessary for this operation to occur
-	 * @return
-	 */
-	public String getKey()
-	{
-		return null;
-	}
 	
 	/**
 	 * Commits this operation
@@ -74,17 +66,16 @@ public class Operation {
 	 */
 	public boolean commit()
 	{
-		try {
-		
-			return rm.commit(OP_ID);
+		try {			
+			boolean result = rm.commit(OP_ID);
+			lm.UnlockAll(transaction_id);
+			return result;
 		
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
 			e.printStackTrace();
-		} catch (TransactionAbortedException e) {
-			e.printStackTrace();
-		}
+		} 
 		return false;
 	}
 	

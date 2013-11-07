@@ -20,6 +20,8 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
 
+import javax.transaction.InvalidTransactionException;
+
 public class ResourceManagerImpl implements ResourceManager 
 {
 
@@ -75,9 +77,9 @@ public class ResourceManagerImpl implements ResourceManager
     /**
      * Commit operation with ID
      */
-    public boolean commit(int op_id)
+    public boolean commit(int op_id) throws RemoteException, InvalidTransactionException
     {
-    	RMItem item =(RMItem)non_committed_items.get("" + op_id);
+    	ReservableItem item =(ReservableItem)non_committed_items.get("" + op_id);
     	writeData(op_id, item.getKey(), item);
     	non_committed_items.remove(item.getKey());
     	return true;
@@ -86,9 +88,9 @@ public class ResourceManagerImpl implements ResourceManager
     /**
      * Abort operation with ID
      */
-    public void abort(int op_id)
+    public void abort(int transaction_id)
     {
-    	RMItem item = (RMItem) non_committed_items.get("" + op_id);
+    	ReservableItem item = (ReservableItem) non_committed_items.get("" + transaction_id);
     	non_committed_items.remove(item.getKey());
     }
     
