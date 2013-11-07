@@ -100,9 +100,10 @@ public class AnalysisClient
         }
         
         Random random = new Random();
+        int selection = random.nextInt(22);
         
         //decide which of the commands this was
-        switch(){
+        switch(selection){
         case 1: //help section
             if(arguments.size()==1)   //command was "help"
             obj.listCommands();
