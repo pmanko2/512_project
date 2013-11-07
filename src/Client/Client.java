@@ -80,7 +80,7 @@ public class Client
         
         
         if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
+            //System.setSecurityManager(new RMISecurityManager());
         }
 
         
@@ -132,7 +132,7 @@ public class Client
 	            flightPrice = obj.getInt(arguments.elementAt(4));
 	            
 	            if(rm.addFlight(Id,flightNum,flightSeats,flightPrice))
-	            {
+	            {            	
 	                if (rm.commit(CURRENT_TRXN))
 	                {
 	                	System.out.println("Flight added");
@@ -145,41 +145,59 @@ public class Client
             	}
 	            else
 	            {
-	                System.out.println("Flight could not be added");
+	                System.out.println("Flight could not be added.");
 	            	rm.abort(CURRENT_TRXN);
 	            }
             }
 
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             
         case 3:  //new Car
             if(arguments.size()!=5){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
+            
             System.out.println("Adding a new Car using id: "+arguments.elementAt(1));
             System.out.println("Car Location: "+arguments.elementAt(2));
             System.out.println("Add Number of Cars: "+arguments.elementAt(3));
             System.out.println("Set Price: "+arguments.elementAt(4));
-            try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
-            numCars = obj.getInt(arguments.elementAt(3));
-            price = obj.getInt(arguments.elementAt(4));
-            if(rm.addCars(Id,location,numCars,price))
-                System.out.println("Cars added");
-            else
-                System.out.println("Cars could not be added");
+
+            try
+            {
+                CURRENT_TRXN = rm.start();
+
+	            Id = obj.getInt(arguments.elementAt(1));
+	            location = obj.getString(arguments.elementAt(2));
+	            numCars = obj.getInt(arguments.elementAt(3));
+	            price = obj.getInt(arguments.elementAt(4));
+	            if(rm.addCars(Id,location,numCars,price))
+	            {
+	            	if (rm.commit(CURRENT_TRXN))
+	                {
+		                System.out.println("Cars added");
+	                }
+	                else
+	                {
+	                	rm.abort(CURRENT_TRXN);
+		                System.out.println("Cars could not be added. Please try again.");
+	                }
+	            }
+	            else
+	            {
+	                System.out.println("Cars could not be added. Please try again.");
+	            }
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             

@@ -22,6 +22,7 @@ import java.rmi.RMISecurityManager;
 
 import javax.transaction.InvalidTransactionException;
 
+@SuppressWarnings("unchecked")
 public class ResourceManagerImpl implements ResourceManager 
 {
 
@@ -91,6 +92,10 @@ public class ResourceManagerImpl implements ResourceManager
     public void abort(int transaction_id)
     {
     	ReservableItem item = (ReservableItem) non_committed_items.get("" + transaction_id);
+    	if (item == null)
+    	{
+    		return;
+    	}
     	non_committed_items.remove(item.getKey());
     }
     
@@ -242,7 +247,6 @@ public class ResourceManagerImpl implements ResourceManager
         if ( curObj == null ) {
             // doesn't exist...add it
             Flight newObj = new Flight( flightNum, flightSeats, flightPrice );
-            //writeData( id, newObj.getKey(), newObj );
             Trace.info("RM::addFlight(" + id + ") created new flight " + flightNum + ", seats=" +
                     flightSeats + ", price=$" + flightPrice );
             non_committed_items.put("" + id, newObj);
@@ -253,7 +257,6 @@ public class ResourceManagerImpl implements ResourceManager
             if ( flightPrice > 0 ) {
                 curObj.setPrice( flightPrice );
             } // if
-            //writeData( id, curObj.getKey(), curObj );
             Trace.info("RM::addFlight(" + id + ") modified existing flight " + flightNum + ", seats=" + curObj.getCount() + ", price=$" + flightPrice );
             non_committed_items.put("" + id, curObj);
             return true;
@@ -305,7 +308,7 @@ public class ResourceManagerImpl implements ResourceManager
 
     // Create a new car location or add cars to an existing location
     //  NOTE: if price <= 0 and the location already exists, it maintains its current price
-    public boolean addCars(int id, String location, int count, int price)
+	public boolean addCars(int id, String location, int count, int price)
         throws RemoteException
     {
         Trace.info("RM::addCars(" + id + ", " + location + ", " + count + ", $" + price + ") called" );
@@ -313,18 +316,19 @@ public class ResourceManagerImpl implements ResourceManager
         if ( curObj == null ) {
             // car location doesn't exist...add it
             Car newObj = new Car( location, count, price );
-            writeData( id, newObj.getKey(), newObj );
+            non_committed_items.put("" + id, newObj);
             Trace.info("RM::addCars(" + id + ") created new location " + location + ", count=" + count + ", price=$" + price );
+            return true;
         } else {
             // add count to existing car location and update price...
             curObj.setCount( curObj.getCount() + count );
             if ( price > 0 ) {
                 curObj.setPrice( price );
             } // if
-            writeData( id, curObj.getKey(), curObj );
+            non_committed_items.put("" + id, curObj);
             Trace.info("RM::addCars(" + id + ") modified existing location " + location + ", count=" + curObj.getCount() + ", price=$" + price );
+            return true;
         } // else
-        return(true);
     }
 
 
