@@ -554,19 +554,32 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryFlight(int id, int flightNumber) throws RemoteException {
 
-		return flights_rm.queryFlight(id, flightNumber);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Flight.getKey(flightNumber));
+		args.put("flightNum", flightNumber);
+		
+		
+		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args);
 	}
 
 	@Override
 	public int queryCars(int id, String location) throws RemoteException {
 
-		return cars_rm.queryCars(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Car.getKey(location));
+		args.put("location", location);
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args);
 	}
 
 	@Override
 	public int queryRooms(int id, String location) throws RemoteException {
 
-		return rooms_rm.queryRooms(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Hotel.getKey(location));
+		args.put("location", location);
+		
+		return tm.addOperationIntReturn(id, rooms_rm, OP_CODE.QUERY_CARS, args);
 	}
 
 	   // return a bill
@@ -591,19 +604,32 @@ public class MiddlewareImpl implements ResourceManager {
 	public int queryFlightPrice(int id, int flightNumber)
 			throws RemoteException {
 
-		return flights_rm.queryFlightPrice(id, flightNumber);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Flight.getKey(flightNumber));
+		args.put("flightNum", flightNumber);
+		
+		
+		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHT_PRICE, args);
 	}
 
 	@Override
 	public int queryCarsPrice(int id, String location) throws RemoteException {
 
-		return cars_rm.queryCarsPrice(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Car.getKey(location));
+		args.put("location", location);
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CAR_PRICE, args);
 	}
 
 	@Override
 	public int queryRoomsPrice(int id, String location) throws RemoteException {
 
-		return rooms_rm.queryRoomsPrice(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Hotel.getKey(location));
+		args.put("location", location);
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_ROOM_PRICE, args);
 	}
 
 	@Override
