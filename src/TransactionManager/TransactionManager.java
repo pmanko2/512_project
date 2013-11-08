@@ -52,6 +52,7 @@ public class TransactionManager {
 	public void abort(int transaction_id)
 	{
 		transaction_table.get("" + transaction_id).abort();
+		transaction_table.remove("" + transaction_id);
 	}
 	
 	/**

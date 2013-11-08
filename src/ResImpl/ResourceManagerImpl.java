@@ -81,11 +81,18 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public boolean commit(int op_id) throws RemoteException, InvalidTransactionException
     {
+    	//write any changes to disk
     	ReservableItem item =(ReservableItem)non_committed_items.get("" + op_id);
     	if (item != null)
     	{
         	writeData(op_id, item.getKey(), item);
         	non_committed_items.remove("" + op_id);
+    	}
+    	//delete any temp data from abort_items
+    	item = (ReservableItem)abort_items.get("" + op_id);
+    	if (item != null)
+    	{
+    		abort_items.remove("" + op_id);
     	}
     	return true;
     }
@@ -135,8 +142,8 @@ public class ResourceManagerImpl implements ResourceManager
     
     // Remove the item out of storage
     protected RMItem removeData(int id, String key) 
-    {
-            return (RMItem)m_itemHT.remove(key);
+    {	
+        return (RMItem)m_itemHT.remove(key);
     }
     
     // deletes the entire item
@@ -150,12 +157,16 @@ public class ResourceManagerImpl implements ResourceManager
             return false;
         } else {
             if (curObj.getReserved()==0) {
-                removeData(id, curObj.getKey());
+            	abort_items.put("" + id, curObj);
+                if (removeData(id, curObj.getKey()) == null)
+                {
+                	Trace.info("ITEM WAS FOUND AND HOPEFULLY REMOVED");
+                }
                 Trace.info("RM::deleteItem(" + id + ", " + key + ") item deleted" );
                 return true;
             }
             else {
-                Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers reserved it" );
+                Trace.info("RM::deleteItem(" + id + ", " + key + ") item can't be deleted because some customers still have it reserved." );
                 return false;
             }
         } // if
@@ -550,11 +561,6 @@ public class ResourceManagerImpl implements ResourceManager
         } // else
     }
 
-
-    
-
-
-
     /*
     // Frees flight reservation record. Flight reservation records help us make sure we
     // don't delete a flight if one or more customers are holding reservations
@@ -572,7 +578,6 @@ public class ResourceManagerImpl implements ResourceManager
         return true;
     }
     */
-
     
     // Adds car reservation to this customer. 
     public boolean reserveCar(int id, int customerID, String location)
@@ -580,7 +585,6 @@ public class ResourceManagerImpl implements ResourceManager
     {
         return reserveItem(id, customerID, Car.getKey(location), location);
     }
-
 
     // Adds room reservation to this customer. 
     public boolean reserveRoom(int id, int customerID, String location)

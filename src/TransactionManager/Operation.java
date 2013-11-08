@@ -90,6 +90,14 @@ public class Operation {
 						return false;
 					}
 					
+				case DELETE_FLIGHT:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to delete flight (not in a persistent way until committed
+					return rm.deleteFlight(OP_ID, (Integer)arguments.get("flightNum"));
+
 				default:
 					
 					return false;

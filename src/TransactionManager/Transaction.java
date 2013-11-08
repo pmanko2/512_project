@@ -93,5 +93,6 @@ public class Transaction {
 		{
 			o.abort();
 		}
+		lm.UnlockAll(TRANSACTION_ID);
 	}
 }

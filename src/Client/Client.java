@@ -267,24 +267,35 @@ public class Client
             
         case 6: //delete Flight
             if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
+            
             System.out.println("Deleting a flight using id: "+arguments.elementAt(1));
             System.out.println("Flight Number: "+arguments.elementAt(2));
+            
             try{
+            	start();
+            	
             	//TODO delete flight
             	Id = CURRENT_TRXN;
             	flightNum = obj.getInt(arguments.elementAt(2));
-            if(rm.deleteFlight(Id,flightNum))
-                System.out.println("Flight Deleted");
-            else
-                System.out.println("Flight could not be deleted");
-            }
+            	
+	            if(rm.deleteFlight(Id,flightNum))
+	            {
+	            	autoCommit("Flight Deleted");
+	            }
+	            else
+	            {
+	                System.out.println("Flight could not be deleted");
+	            	rm.abort(CURRENT_TRXN);
+	            }
+	        }
+            
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             
@@ -730,6 +741,7 @@ public class Client
         	if (!user_said_start)
         	{
     			rm.commit(CURRENT_TRXN);
+    			user_said_start = false;
     			System.out.println("Autocommitted");
         	}
 			System.out.println(success);

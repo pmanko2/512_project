@@ -448,9 +448,11 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
 
-		//sync on smae lock as reserve item
-		return flights_rm.deleteFlight(id, flightNum);
-		
+		HashMap<String, Object> args = new HashMap<String, Object>();
+	
+		args.put("key",  Flight.getKey(flightNum));
+		args.put("flightNum", flightNum);
+		return tm.addOperation(id, flights_rm, OP_CODE.DELETE_FLIGHT, args);
 	}
 
 	@Override
