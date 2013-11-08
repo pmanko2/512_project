@@ -34,6 +34,8 @@ public class AnalysisClient
         String location;
         String numIterationsString = "0";
         int NUM_TRANSACTIONS;
+        int testingSelection = -1;
+        boolean automateTesting = false;
 
 
         String server = "teaching.cs.mcgill.ca";
@@ -82,10 +84,41 @@ public class AnalysisClient
             System.setSecurityManager(new RMISecurityManager());
         }
         
-        boolean correctInput = false;
+        boolean correctOption = false;
         
+        boolean correctInput = false;
         while(!correctInput)
         {
+        	System.out.println("Please choose an option:\n\n1. Choose transaction to test \n 2. Automate Testing");
+            try {
+    			String selection = stdin.readLine();
+    			testingSelection = Integer.parseInt(selection);
+    			
+    			if(!(testingSelection == 1 || testingSelection == 2))
+    			{
+    				System.out.println("Incorrect selection, Please try again");
+    				break;
+    			}
+    			else
+    			{
+    				correctInput = true;
+    			}
+    			
+    		} catch (IOException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+            
+            if(testingSelection == 1)
+            {
+            	printTransactionOptions();
+            }
+            else
+            {
+            	automateTesting = true;
+            }
+            
+        	
         	 System.out.println("How many transactions would you like the client to submit?\n>");
              try {
      			numIterationsString = stdin.readLine();
@@ -99,33 +132,24 @@ public class AnalysisClient
      			correctInput = false;
      		}
         }
-        
-        Random random = new Random();
-        int selection = random.nextInt(22);
-
     }
     
-    private void newItem(Type type, ArrayList<String> params)
+    private void environmentSetup()
     {
-    	
-    }
-    
-    private void bookItem(Type type, ArrayList<String> params)
-    {
-    	
-    }
-    
-    private void deleteItem(Type type, ArrayList<String> params)
-    {
-    	
-    }
-    
-    private void queryItem(Type type, ArrayList<String> params)
-    {
-    	
+    	//TODO setup initial customers, flights, etc
     }
     
     private void reserveItinerary()
+    {
+    
+    }
+    
+    private void addCustomer(int id)
+    {
+    	
+    }
+    
+    private static void printTransactionOptions()
     {
     	
     }
