@@ -30,6 +30,7 @@ public class Transaction {
 		lm = l;
 		// create new timer and set it to go off in 5 minutes
 		timer = new Timer();
+
 		abortTransaction = new AbortTask(this);
 		timer.schedule(abortTransaction, 5*60*1000);
 	}
@@ -64,7 +65,9 @@ public class Transaction {
 		
 		//cancel current timer and create new timer with new time limit
 		
-		timer.schedule(new AbortTask(this), 5*60*1000);
+		abortTransaction.cancel();
+		abortTransaction = new AbortTask(this);
+		timer.schedule(abortTransaction, 5*60*1000);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
@@ -98,9 +101,15 @@ public class Transaction {
 				//check if all the keys are the same
 				for (String k : keys)
 				{
-					if (!(o_keys.contains(k)))
+			        String delims = "[-]";
+			        String[] tokens = k.split(delims);
+			        
+					if (!tokens[0].equals("customer"))
 					{
-						same_operation = false;
+						if (!(o_keys.contains(k)))
+						{
+							same_operation = false;
+						}
 					}
 				}
 			//}
