@@ -104,6 +104,12 @@ public class ResourceManagerImpl implements ResourceManager
     {
             return (RMItem) m_itemHT.get(key);
     }
+    
+    //Reads a data item from uncomitted data
+    private RMItem readNonCommittedData( int id, String key )
+    {
+            return (RMItem) non_committed_items.get(key);
+    }
 
     // Writes a data item
     @SuppressWarnings("unchecked")
@@ -243,7 +249,11 @@ public class ResourceManagerImpl implements ResourceManager
         throws RemoteException
     {
         Trace.info("RM::addFlight(" + id + ", " + flightNum + ", $" + flightPrice + ", " + flightSeats + ") called" );
-        Flight curObj = (Flight) readData( id, Flight.getKey(flightNum) );
+        Flight curObj;
+        if ((curObj = (Flight) readNonCommittedData( id, Flight.getKey(flightNum)))==null)
+       	{
+        	curObj = (Flight) readData( id, Flight.getKey(flightNum));
+  		}
         if ( curObj == null ) {
             // doesn't exist...add it
             Flight newObj = new Flight( flightNum, flightSeats, flightPrice );
@@ -311,8 +321,13 @@ public class ResourceManagerImpl implements ResourceManager
 	public boolean addCars(int id, String location, int count, int price)
         throws RemoteException
     {
+		//TODO update to check temp file first before new one
         Trace.info("RM::addCars(" + id + ", " + location + ", " + count + ", $" + price + ") called" );
-        Car curObj = (Car) readData( id, Car.getKey(location) );
+        Car curObj;
+        if ((curObj = (Car) readNonCommittedData( id, Car.getKey(location)))==null)
+        {
+        	curObj = (Car) readData( id, Car.getKey(location));
+        }
         if ( curObj == null ) {
             // car location doesn't exist...add it
             Car newObj = new Car( location, count, price );

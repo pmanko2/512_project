@@ -6,8 +6,11 @@ import TransactionManager.TransactionAbortedException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RMISecurityManager;
+import java.rmi.RemoteException;
 import java.util.*;
 import java.io.*;
+
+import javax.transaction.InvalidTransactionException;
 
     
 public class Client
@@ -16,6 +19,7 @@ public class Client
     //this references a Middleware Object
     static ResourceManager rm = null;
     private static int CURRENT_TRXN;
+    private static boolean user_said_start;
 
 	@SuppressWarnings("unchecked")
 	public static void main(String args[]) throws TransactionAbortedException
@@ -25,6 +29,7 @@ public class Client
         String command = "";
         @SuppressWarnings("rawtypes")
 		Vector arguments  = new Vector();
+        user_said_start = false;
         int Id, Cid;
         int flightNum;
         int flightPrice;
@@ -35,6 +40,8 @@ public class Client
         int numRooms;
         int numCars;
         String location;
+        
+       
 
 
         String server = "teaching.cs.mcgill.ca";
@@ -124,7 +131,8 @@ public class Client
             System.out.println("Set Flight Price: "+arguments.elementAt(4));
             
             try{
-            	CURRENT_TRXN = rm.start();
+            	//if the user hadn't manually started a transaction, start a transaction
+            	start();
                 
 	            Id = CURRENT_TRXN;
 	            flightNum = obj.getInt(arguments.elementAt(2));
@@ -132,16 +140,9 @@ public class Client
 	            flightPrice = obj.getInt(arguments.elementAt(4));
 	            
 	            if(rm.addFlight(Id,flightNum,flightSeats,flightPrice))
-	            {            	
-	                if (rm.commit(CURRENT_TRXN))
-	                {
-	                	System.out.println("Flight added");
-	                }
-	                else
-	                {
-	                	rm.abort(CURRENT_TRXN);
-		                System.out.println("Flight could not be added. Please try again.");
-	                }
+	            {   
+	            	//commits only if the user hadn't manually started a transaction
+	            	autoCommit("Flight added successfully.");
             	}
 	            else
 	            {
@@ -170,27 +171,23 @@ public class Client
 
             try
             {
-                CURRENT_TRXN = rm.start();
-
+            	start();
+            	
 	            Id = obj.getInt(arguments.elementAt(1));
 	            location = obj.getString(arguments.elementAt(2));
 	            numCars = obj.getInt(arguments.elementAt(3));
 	            price = obj.getInt(arguments.elementAt(4));
-	            if(rm.addCars(Id,location,numCars,price))
-	            {
-	            	if (rm.commit(CURRENT_TRXN))
-	                {
-		                System.out.println("Cars added");
-	                }
-	                else
-	                {
-	                	rm.abort(CURRENT_TRXN);
-		                System.out.println("Cars could not be added. Please try again.");
-	                }
+	            
+	            boolean temp = rm.addCars(Id, location, numCars, price);
+	            System.out.println(temp);
+	            if(temp)
+	            {   	
+	            		autoCommit("Cars added.");      	
 	            }
 	            else
 	            {
 	                System.out.println("Cars could not be added. Please try again.");
+	                rm.abort(CURRENT_TRXN);
 	            }
             }
             catch(Exception e)
@@ -591,6 +588,7 @@ public class Client
             }
             System.out.println("Quitting client.");
             System.exit(1);
+            break;
                         
         case 22:  //new Customer given id
             if(arguments.size()!=3){
@@ -611,12 +609,82 @@ public class Client
             }
             break;
             
+        case 23:
+        	user_said_start = true;
+        	try {
+				CURRENT_TRXN = rm.start();
+				System.out.println("A new transaction has been started. To commit changes at any "
+						+ "point, type commit. To discard changes, type abort.");
+        	} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+        	break;
+        	
+        case 24:
+        	try {
+				rm.commit(CURRENT_TRXN);
+				System.out.println("All changes since last commit have been committed.");
+			} catch (InvalidTransactionException e) {
+				e.printStackTrace();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+        	break;
+        	
+        case 25:
+        	try {
+				rm.abort(CURRENT_TRXN);
+				System.out.println("All changes since last commit have been discarded.");
+			} catch (InvalidTransactionException e) {
+				e.printStackTrace();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+        	break;
+            
         default:
             System.out.println("The interface does not support this command.");
             break;
         }//end of switch
         }//end of while(true)
     }
+	
+	/**
+	 * This method starst a new transaction if the user hadn't already typed
+	 * start; otherwise, it does nothing.
+	 */
+	private static void start()
+	{
+		if (user_said_start)
+		{
+			//do nothing
+		}
+		//otherwise, start a transaction
+		else
+		{
+			try {
+				CURRENT_TRXN = rm.start();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private static void autoCommit(String success)
+	{
+        try {
+        	if (!user_said_start)
+        	{
+    			rm.commit(CURRENT_TRXN);
+        	}
+			System.out.println(success);
+			
+		} catch (InvalidTransactionException e) {
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+	}
         
     @SuppressWarnings({ "rawtypes", "unchecked" })
 	public Vector parse(String command)
@@ -678,6 +746,12 @@ public class Client
         return 21;
     else if (argument.compareToIgnoreCase("newcustomerid")==0)
         return 22;
+    else if (argument.compareToIgnoreCase("start")==0)
+    	return 23;
+    else if (argument.compareToIgnoreCase("commit")==0)
+    	return 24;
+    else if (argument.compareToIgnoreCase("abort")==0)
+    	return 25;
     else
         return 666;
 
@@ -688,6 +762,7 @@ public class Client
     System.out.println("\nWelcome to the client interface provided to test your project.");
     System.out.println("Commands accepted by the interface are:");
     System.out.println("help");
+    System.out.println("start\ncommit\nabort");
     System.out.println("newflight\nnewcar\nnewroom\nnewcustomer\nnewcustomerid\ndeleteflight\ndeletecar\ndeleteroom");
     System.out.println("deletecustomer\nqueryflight\nquerycar\nqueryroom\nquerycustomer");
     System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
@@ -877,6 +952,23 @@ public class Client
             System.out.println("\nUsage:");
             System.out.println("\tnewcustomerid, <id>, <customerid>");
             break;
+            
+        case 23: //start
+        	System.out.println("Starts a new transaction");
+        	System.out.println("\nUsage:\n\tstart");
+        	break;
+        	
+        case 24: //commit
+        	System.out.println("Commits the last transaction that was started.");
+        	System.out.println("Purpose:\n\tSaves all changes made since start was called by user.");
+        	System.out.println("\nUsage:\n\tcommit");
+        	break;
+        	
+        case 25: //abort
+        	System.out.println("Aborts the last transaction that was started.");
+        	System.out.println("Purpose:\n\tDiscards all changes made since start was called by user.");
+        	System.out.println("\nUsage:\n\tabort");
+        	break;
 
         default:
         System.out.println(command);

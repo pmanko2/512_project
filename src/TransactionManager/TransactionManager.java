@@ -1,6 +1,7 @@
 package TransactionManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import javax.transaction.InvalidTransactionException;
@@ -19,7 +20,7 @@ public class TransactionManager {
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
 	private static int transaction_id_counter;
-	private LockManager lm;
+	private static LockManager lm;
 
 	public TransactionManager()
 	{
@@ -56,7 +57,7 @@ public class TransactionManager {
 	 * @param transaction_id
 	 * @return
 	 */
-	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, ArrayList<Object> args)
+	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args)
 	{
 		return transaction_table.get("" + transaction_id).addOperation(r, op, args);
 	}
