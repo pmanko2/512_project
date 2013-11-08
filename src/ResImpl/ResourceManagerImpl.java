@@ -28,6 +28,7 @@ public class ResourceManagerImpl implements ResourceManager
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	private RMHashtable non_committed_items = new RMHashtable();
+	private RMHashtable abort_items = new RMHashtable();
 
     public static void main(String args[]) {
         // Figure out where server is running
@@ -81,22 +82,36 @@ public class ResourceManagerImpl implements ResourceManager
     public boolean commit(int op_id) throws RemoteException, InvalidTransactionException
     {
     	ReservableItem item =(ReservableItem)non_committed_items.get("" + op_id);
-    	writeData(op_id, item.getKey(), item);
-    	non_committed_items.remove(item.getKey());
+    	if (item != null)
+    	{
+        	writeData(op_id, item.getKey(), item);
+        	non_committed_items.remove("" + op_id);
+    	}
     	return true;
     }
     
     /**
-     * Abort operation with ID
+     * Abort operation with ID. Removes data from temp object if it's there.
+     * Also writes back any items that were in abort_items (this is so that
+     * we don't have to manually undo increments or decrements that are caused
+     * when calling addx on an item x that already exists
      */
-    public void abort(int transaction_id)
+    public void abort(int op_id)
     {
-    	ReservableItem item = (ReservableItem) non_committed_items.get("" + transaction_id);
-    	if (item == null)
+    	//put back any old data (used for cases where the state of an object is changed
+    	//instead of having been simply newly created
+    	ReservableItem item = (ReservableItem) abort_items.get("" + op_id);
+    	if (item != null)
     	{
-    		return;
+    		writeData(op_id, item.getKey(), item);
     	}
-    	non_committed_items.remove(item.getKey());
+    	
+    	//remove any temporary data from non_committed_items
+    	item = (ReservableItem) non_committed_items.get("" + op_id);
+    	if (item != null)
+    	{
+        	non_committed_items.remove(item.getKey());
+    	}
     }
     
     // Reads a data item
@@ -106,9 +121,9 @@ public class ResourceManagerImpl implements ResourceManager
     }
     
     //Reads a data item from uncomitted data
-    private RMItem readNonCommittedData( int id, String key )
+    private RMItem readNonCommittedData( int id )
     {
-            return (RMItem) non_committed_items.get(key);
+            return (RMItem) non_committed_items.get("" + id);
     }
 
     // Writes a data item
@@ -250,7 +265,7 @@ public class ResourceManagerImpl implements ResourceManager
     {
         Trace.info("RM::addFlight(" + id + ", " + flightNum + ", $" + flightPrice + ", " + flightSeats + ") called" );
         Flight curObj;
-        if ((curObj = (Flight) readNonCommittedData( id, Flight.getKey(flightNum)))==null)
+        if ((curObj = (Flight) readNonCommittedData( id ))==null)
        	{
         	curObj = (Flight) readData( id, Flight.getKey(flightNum));
   		}
@@ -262,7 +277,12 @@ public class ResourceManagerImpl implements ResourceManager
             non_committed_items.put("" + id, newObj);
             return true;
         } else {
-            // add seats to existing flight and update the price...
+        	//Creates a copy of the current object and adds to items that need to be written back on abort
+        	Flight tempObj = new Flight (Integer.parseInt(curObj.getLocation()), curObj.getCount(), curObj.getPrice());
+        	tempObj.setReserved(curObj.getReserved());
+        	abort_items.put("" + id, tempObj);
+        	
+            //add seats to existing flight and update the price...
             curObj.setCount( curObj.getCount() + flightSeats );
             if ( flightPrice > 0 ) {
                 curObj.setPrice( flightPrice );
@@ -324,7 +344,7 @@ public class ResourceManagerImpl implements ResourceManager
 		//TODO update to check temp file first before new one
         Trace.info("RM::addCars(" + id + ", " + location + ", " + count + ", $" + price + ") called" );
         Car curObj;
-        if ((curObj = (Car) readNonCommittedData( id, Car.getKey(location)))==null)
+        if ((curObj = (Car) readNonCommittedData( id ))==null)
         {
         	curObj = (Car) readData( id, Car.getKey(location));
         }
@@ -335,6 +355,11 @@ public class ResourceManagerImpl implements ResourceManager
             Trace.info("RM::addCars(" + id + ") created new location " + location + ", count=" + count + ", price=$" + price );
             return true;
         } else {
+        	//Creates a copy of the current object and adds to items that need to be written back on abort
+        	Car tempObj = new Car (curObj.getLocation(), curObj.getCount(), curObj.getPrice());
+        	tempObj.setReserved(curObj.getReserved());
+        	abort_items.put("" + id, tempObj);
+        	
             // add count to existing car location and update price...
             curObj.setCount( curObj.getCount() + count );
             if ( price > 0 ) {

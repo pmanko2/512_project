@@ -69,6 +69,7 @@ public class Transaction {
 		{
 			o.commit();
 		}
+		lm.UnlockAll(TRANSACTION_ID);
 		return true;
 	}
 	

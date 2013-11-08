@@ -82,7 +82,6 @@ public class Operation {
 	{
 		try {			
 			boolean result = rm.commit(OP_ID);
-			lm.UnlockAll(transaction_id);
 			return result;
 		
 		} catch (InvalidTransactionException e) {
