@@ -324,21 +324,29 @@ public class Client
             break;
             
         case 8: //delete Room
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Deleting all rooms from a particular location  using id: "+arguments.elementAt(1));
             System.out.println("Room Location: "+arguments.elementAt(2));
-            try{
-            	//TODO delete room
+            
+            try
+            {
+
+            	start();
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
-            if(rm.deleteRooms(Id,location))
-                System.out.println("Rooms Deleted");
-            else
-                System.out.println("Rooms could not be deleted");
+           
+            	if(rm.deleteRooms(Id,location))
+            		System.out.println("Rooms Deleted");
+            
+            	else
+            		System.out.println("Rooms could not be deleted");
             }
+            
             catch(Exception e){
             System.out.println("EXCEPTION:");
             System.out.println(e.getMessage());
