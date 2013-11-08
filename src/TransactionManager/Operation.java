@@ -140,8 +140,14 @@ public class Operation {
 							return false;
 						}
 					}
+					
+				case RESERVE_FLIGHT:
+					
+					//acquire write lock for customer, as well as the flight
+					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
+					lm.Lock(transaction_id, (String) arguments.get("flight_key"), TrxnObj.WRITE);
 
-					return ((MiddlewareImpl) rm).deleteCustomerExecute(OP_ID, (Integer)arguments.get("cid"));
+					return ((MiddlewareImpl) rm).reserveFlightExecute(OP_ID, (Integer)arguments.get("cid"), (Integer)arguments.get("flightNum"));
 			
 				default:
 					

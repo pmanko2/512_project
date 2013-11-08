@@ -244,7 +244,8 @@ public class ResourceManagerImpl implements ResourceManager
 	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
 
         ReservableItem item_to_update = (ReservableItem)readData(id, item.getKey());
-	
+        abort_items.put("" + id, item);
+
         // decrease the number of available items in the storage
         item_to_update.setCount(item_to_update.getCount() - 1);
         item_to_update.setReserved(item_to_update.getReserved()+1);

@@ -265,14 +265,20 @@ public class MiddlewareImpl implements ResourceManager {
     }
     
     // reserve an item
-    protected boolean reserveItem(int id, int customerID, String key, String location) {
+    @SuppressWarnings("unchecked")
+	protected boolean reserveItem(int op_id, int cid, String key, String location) {
     	try 
     	{
-    		Trace.info("RM::reserveItem( " + id + ", customer=" + customerID + ", " +key+ ", "+location+" ) called" );        
+    		Trace.info("RM::reserveItem( " + op_id + ", customer=" + cid + ", " +key+ ", "+location+" ) called" );        
 	        // Read customer object if it exists (and read lock it)
-	        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );        
-	        if ( cust == null ) {
-	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", "+location+")  failed--customer doesn't exist" );
+            Customer cust;
+            
+            if ((cust = (Customer) readNonCommittedData( op_id ))==null)
+           	{
+            	cust = (Customer) readData( op_id, Customer.getKey(cid));
+      		}
+            if ( cust == null ) {
+	            Trace.warn("RM::reserveItem( " + op_id + ", " + cid + ", " + key + ", "+location+")  failed--customer doesn't exist" );
 	            return false;
 	        } 
 	        
@@ -285,54 +291,53 @@ public class MiddlewareImpl implements ResourceManager {
 	        //if it's a flight
 	        if (tokens[0].equals("flight"))
 	        {
-	        	item = flights_rm.getReservableItem(id, key);
+	        	item = flights_rm.getReservableItem(op_id, key);
 	        }
 	        //else if the item is a car
 	        else if (tokens[0].equals("car"))
 	        {
-	        	item = cars_rm.getReservableItem(id, key);
+	        	item = cars_rm.getReservableItem(op_id, key);
 	        }
 	        //otherwise it's a room
 	        else
 	        {
-	        	item = rooms_rm.getReservableItem(id, key);
-	        }
-	        
-	        
-	        //add sync block
-	        
+	        	item = rooms_rm.getReservableItem(op_id, key);
+	        }	        
 	        
 	        if ( item == null ) {
-	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " +location+") failed--item doesn't exist" );
+	            Trace.warn("RM::reserveItem( " + op_id + ", " + cid + ", " + key+", " +location+") failed--item doesn't exist" );
 	            return false;
 	        } else if (item.getCount()==0) {
-	            Trace.warn("RM::reserveItem( " + id + ", " + customerID + ", " + key+", " + location+") failed--No more items" );
+	            Trace.warn("RM::reserveItem( " + op_id + ", " + cid + ", " + key+", " + location+") failed--No more items" );
 	            return false;
-	        } else {            
-	            cust.reserve( key, location, item.getPrice());        
-	            writeData( id, cust.getKey(), cust );
+	        } else {   
+	        	//create a copy of the customer to be committed or disarded on abort with changes
+	        	Customer temp = new Customer(cid);
+	        	temp.setReservations((RMHashtable)cust.getReservations().clone());
+     	        temp.reserve( key, location, item.getPrice());        
+	        	non_committed_items.put("" + op_id, temp);
 	            
 	            // decrease the number of available items in the storage
 	            boolean resource_updated = false;
 	            
 	            if (tokens[0].equals("flight"))
 		        {
-	            	resource_updated = flights_rm.itemReserved(id, item);
+	            	resource_updated = flights_rm.itemReserved(op_id, item);
 		        }
 		        //else if the item is a car
 		        else if (tokens[0].equals("car"))
 		        {
-	            	resource_updated = cars_rm.itemReserved(id, item);
+	            	resource_updated = cars_rm.itemReserved(op_id, item);
 		        }
 		        //otherwise it's a room
 		        else
 		        {
-	            	resource_updated = rooms_rm.itemReserved(id, item);
+	            	resource_updated = rooms_rm.itemReserved(op_id, item);
 		        }
 
 	            if (resource_updated)
 	            {
-		            Trace.info("RM::reserveItem( " + id + ", " + customerID + ", " + key + ", " +location+") succeeded" );
+		            Trace.info("RM::reserveItem( " + op_id + ", " + cid + ", " + key + ", " +location+") succeeded" );
 		            return true;
 	            }
 	            else 
@@ -610,6 +615,18 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
 			
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("flight_key", Flight.getKey(flightNumber));
+		args.put("customer_key", Customer.getKey(customer));
+		args.put("cid", customer);
+		args.put("flightNum", flightNumber);
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, flights_rm, OP_CODE.RESERVE_FLIGHT, args);
+	}
+	
+	public boolean reserveFlightExecute(int id, int customer, int flightNumber)
+	{
         return reserveItem(id, customer, Flight.getKey(flightNumber), String.valueOf(flightNumber));
 	}
 
