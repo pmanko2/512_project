@@ -44,7 +44,9 @@ public class TransactionManager {
 	
 	public boolean commit(int transaction_id) throws InvalidTransactionException
 	{
-		return transaction_table.get("" + transaction_id).commit();
+		boolean return_value = transaction_table.get("" + transaction_id).commit();
+		transaction_table.remove("" + transaction_id);
+		return return_value;
 	}
 	
 	public void abort(int transaction_id)

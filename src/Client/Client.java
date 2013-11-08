@@ -173,14 +173,12 @@ public class Client
             {
             	start();
             	
-	            Id = obj.getInt(arguments.elementAt(1));
+	            Id = CURRENT_TRXN;
 	            location = obj.getString(arguments.elementAt(2));
 	            numCars = obj.getInt(arguments.elementAt(3));
 	            price = obj.getInt(arguments.elementAt(4));
 	            
-	            boolean temp = rm.addCars(Id, location, numCars, price);
-	            System.out.println(temp);
-	            if(temp)
+	            if(rm.addCars(Id, location, numCars, price))
 	            {   	
 	            		autoCommit("Cars added.");      	
 	            }
@@ -610,9 +608,9 @@ public class Client
             break;
             
         case 23:
-        	user_said_start = true;
         	try {
 				CURRENT_TRXN = rm.start();
+	        	user_said_start = true;
 				System.out.println("A new transaction has been started. To commit changes at any "
 						+ "point, type commit. To discard changes, type abort.");
         	} catch (RemoteException e) {
@@ -623,7 +621,9 @@ public class Client
         case 24:
         	try {
 				rm.commit(CURRENT_TRXN);
-				System.out.println("All changes since last commit have been committed.");
+				user_said_start = false;
+				System.out.println("All changes since last commit have been committed."
+						+ " To start a new transaction, type start.");
 			} catch (InvalidTransactionException e) {
 				e.printStackTrace();
 			} catch (RemoteException e) {
@@ -634,7 +634,9 @@ public class Client
         case 25:
         	try {
 				rm.abort(CURRENT_TRXN);
-				System.out.println("All changes since last commit have been discarded.");
+				user_said_start = false;
+				System.out.println("All changes since last commit have been discarded. T"
+						+ "o start a new transaction, type start.");
 			} catch (InvalidTransactionException e) {
 				e.printStackTrace();
 			} catch (RemoteException e) {
@@ -676,6 +678,7 @@ public class Client
         	if (!user_said_start)
         	{
     			rm.commit(CURRENT_TRXN);
+    			System.out.println("Autocommitted");
         	}
 			System.out.println(success);
 			
