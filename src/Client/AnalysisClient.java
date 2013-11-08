@@ -21,15 +21,16 @@ public class AnalysisClient
   //arraylists of room, car, flight, customer ids
     ArrayList<Integer> roomList = new ArrayList<Integer>();
     ArrayList<Integer> carList = new ArrayList<Integer>();
-    ArrayList<Integer> flightList = new ArrayList<Integer>();
-    ArrayList<Integer> customerList = new ArrayList<Integer>();
+    static ArrayList<Integer> flightList = new ArrayList<Integer>();
+    static ArrayList<Integer> customerList = new ArrayList<Integer>();
     
-    Random random = new Random();
+    static Random random = new Random();
     
     private static int CURRENT_TRXN;
+    private static long reactionTime;
 
     @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
-	public static void main(String args[])
+	public static void main(String args[]) throws InterruptedException
     {
         Client obj = new Client();
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -46,9 +47,13 @@ public class AnalysisClient
         int numCars;
         String location;
         String numIterationsString = "0";
-        int NUM_TRANSACTIONS;
+        int numTransactions = 0;
         int testingSelection = -1;
         boolean automateTesting = false;
+        boolean setupClient = false;
+        final int TRXNS_PER_SECOND = 2;
+        reactionTime = 0;
+        
 
 
         String server = "teaching.cs.mcgill.ca";
@@ -60,11 +65,17 @@ public class AnalysisClient
         }
         if (args.length > 1)
         {
-            port = Integer.parseInt(args[1]);
+            int clientType = Integer.parseInt(args[1]);
+            setupClient = (clientType == 1) ? true : false;
         }
         if (args.length > 2)
         {
-            System.out.println ("Usage: java client [rmihost [rmiport]]");
+        	port = Integer.parseInt(args[2]);
+        }
+        
+        if (args.length > 3)
+        {
+            System.out.println ("Usage: java client [rmihost] [setupwithclient(0 or 1)] [port]");
             System.exit(1);
         }
         
@@ -134,7 +145,7 @@ public class AnalysisClient
         	 System.out.println("How many transactions would you like the client to submit?\n>");
              try {
      			numIterationsString = stdin.readLine();
-     			NUM_TRANSACTIONS = Integer.parseInt(numIterationsString);
+     			numTransactions = Integer.parseInt(numIterationsString);
      			correctInput = true;
      		} catch (IOException e1) {
      			e1.printStackTrace();
@@ -142,6 +153,70 @@ public class AnalysisClient
      			System.out.println("Incorrect input, please try again");
      			correctInput = false;
      		}
+        }
+        
+        for(int i = 0; i < numTransactions; i++)
+        {
+        	long transactionStart = System.currentTimeMillis();
+        	
+        	if(automateTesting)
+        	{
+        		int transactionSelection = random.nextInt(4);
+        		
+        		switch(transactionSelection)
+        		{
+        			case 0:
+        				bookCarRoomQueryFlight();
+        				break;
+        			case 1:
+        				addQueryCars();
+        				break;
+        			case 3:
+        				returnBills();
+        				break;
+        			default:
+        				reserveItinerary();
+        				break;
+        		}
+        	}
+        	else
+        	{
+        		switch(testingSelection)
+        		{
+	        		case 1:
+	    				bookCarRoomQueryFlight();
+	    				break;
+	    			case 2:
+	    				addQueryCars();
+	    				break;
+	    			case 3:
+	    				returnBills();
+	    				break;
+	    			default:
+	    				reserveItinerary();
+        				break;
+        		}
+        	}
+        	
+        	//TODO interval stuff
+        	
+        	long transactionEnd = System.currentTimeMillis();
+        	reactionTime = transactionEnd - transactionStart;
+        	System.out.println("Response Time: " + reactionTime);
+        	
+        	int millisForTransaction = 1000 / TRXNS_PER_SECOND;
+        	int lowerTrxnBound = millisForTransaction - 50;
+        	int upperTrxnBound = millisForTransaction + 50; 
+        	
+        	if(millisForTransaction - reactionTime < 0)
+        	{
+        		continue;
+        	}
+        	else
+        	{
+        		Thread.sleep(random.nextInt(upperTrxnBound - lowerTrxnBound) + lowerTrxnBound);
+        	}
+        		
         }
     }
     
@@ -177,7 +252,7 @@ public class AnalysisClient
 		addRoom("New Jersey",4,numRooms,roomPrice);
     }
     
-    private void bookCarRoomQueryFlight()
+    private static void bookCarRoomQueryFlight()
     {
     	try 
 		{
@@ -203,7 +278,7 @@ public class AnalysisClient
 		}
     }
     
-    private void addQueryCars()
+    private static void addQueryCars()
     {
     	try 
 		{
@@ -231,7 +306,7 @@ public class AnalysisClient
 		}
     }
     
-    private void returnBills()
+    private static void returnBills()
     {
     	try 
 		{
@@ -267,7 +342,7 @@ public class AnalysisClient
     }
     
     @SuppressWarnings("unchecked")
-	private void reserveItinerary()
+	private static void reserveItinerary()
     {
     	try 
 		{
@@ -387,7 +462,7 @@ public class AnalysisClient
 		}
     }
     
-    private String chooseLocation()
+    private static String chooseLocation()
     {
     	int locationSelection = random.nextInt(4);
 		String location;
@@ -413,6 +488,10 @@ public class AnalysisClient
     
     private static void printTransactionOptions()
     {
-    	
+    	System.out.println("Choose a transaction type below:");
+    	System.out.println("1. Book Car and Room, Query Flight");
+    	System.out.println("2. Add and Query Cars");
+    	System.out.println("3. Return Customer Bills");
+    	System.out.println("4. Reserve Itinerary\n");
     }
 }
