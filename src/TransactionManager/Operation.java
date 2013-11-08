@@ -11,6 +11,8 @@ import LockManager.LockManager;
 import LockManager.TrxnObj;
 import ResImpl.Car;
 import ResImpl.Flight;
+import ResImpl.Hotel;
+import ResImpl.MiddlewareImpl;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -35,6 +37,11 @@ public class Operation {
 		operation_count++;
 	}
 	
+	/**
+	 * Method used to execute functions that return a boolean value. The result of these
+	 * executions are not persistent until they are committed.
+	 * @return
+	 */
 	public boolean execute()
 	{
 		try 
@@ -59,7 +66,30 @@ public class Operation {
 					
 					//call rm to create a non-committed RMItem
 					return rm.addCars(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numCars"), (Integer)arguments.get("price"));
-										
+						
+				case ADD_ROOMS:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to create a non-committed RMItem
+					return rm.addRooms(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numRooms"), (Integer)arguments.get("price"));
+				
+				case NEW_CUSTOMER_ID:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to create a non-committed RMItem
+					if ((rm.newCustomerExecute(OP_ID, (Integer)arguments.get("cid")))!=-1)
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+					
 				default:
 					
 					return false;
@@ -75,13 +105,57 @@ public class Operation {
 	}
 	
 	/**
+	 * Method used to execute functions that return a boolean value. The result of these
+	 * executions are not persistent until they are committed.
+	 * @return
+	 */
+	public int executeIntReturn()
+	{
+		try 
+		{
+			//string used to hold key for whatever item is being worked with
+			String key;
+
+			switch(operation)
+			{
+				case NEW_CUSTOMER:
+				
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to create a non-committed RMItem
+					return rm.newCustomerExecute(OP_ID, (Integer)arguments.get("cid"));
+
+				default:
+					
+					return -1;
+			}
+		}
+		catch (DeadlockException e)
+		{
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	/**
 	 * Commits this operation
 	 * @return True if the operation was successfully committed; otherwise, returns false
 	 */
 	public boolean commit()
 	{
 		try {			
-			boolean result = rm.commit(OP_ID);
+			boolean result;
+			if (rm instanceof MiddlewareImpl)
+			{
+				result = ((MiddlewareImpl) rm).commitOperation(OP_ID);
+			}
+			else
+			{
+				result = rm.commit(OP_ID);
+			}
 			return result;
 		
 		} catch (InvalidTransactionException e) {
@@ -98,7 +172,14 @@ public class Operation {
 	public void abort()
 	{
 		try {
-			rm.abort(OP_ID);
+			if (rm instanceof MiddlewareImpl)
+			{
+				((MiddlewareImpl) rm).abortOperation(OP_ID);
+			}
+			else
+			{
+				rm.abort(OP_ID);
+			}
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {

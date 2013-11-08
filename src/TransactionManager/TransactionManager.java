@@ -63,6 +63,11 @@ public class TransactionManager {
 	{
 		return transaction_table.get("" + transaction_id).addOperation(r, op, args);
 	}
+	
+	public int addOperationIntReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	{
+		return transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args);
+	}
 
 	public void enlist()
 	{

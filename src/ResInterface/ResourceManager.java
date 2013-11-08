@@ -69,6 +69,9 @@ public interface ResourceManager extends Remote
     /* new customer with providing id */
     public boolean newCustomer(int id, int cid)
     throws RemoteException;
+    
+    public int newCustomerExecute(int op_id, int cid)
+    throws RemoteException;
 
     /**
      *   Delete the entire flight.

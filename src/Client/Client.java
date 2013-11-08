@@ -94,7 +94,11 @@ public class Client
         
         
         System.out.println("\n\n\tClient Interface");
-        System.out.println("Type \"help\" for list of supported commands");
+        System.out.println("Type \"help\" for list of supported commands.");
+        System.out.println("\nType start to start a new transaction. To terminate a"
+        		+ " transaction, type commit to save changes or abort to discard changes.");
+        System.out.println("\nIf you do not start a transaction before performing an operation,"
+        		+ " a transaction will be started for you and will attempt to commit automatically.");
         while(true){
         System.out.print("\n>");
         try{
@@ -198,45 +202,66 @@ public class Client
             
         case 4:  //new Room
             if(arguments.size()!=5){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Adding a new Room using id: "+arguments.elementAt(1));
             System.out.println("Room Location: "+arguments.elementAt(2));
             System.out.println("Add Number of Rooms: "+arguments.elementAt(3));
             System.out.println("Set Price: "+arguments.elementAt(4));
+           
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
-            numRooms = obj.getInt(arguments.elementAt(3));
-            price = obj.getInt(arguments.elementAt(4));
-            if(rm.addRooms(Id,location,numRooms,price))
-                System.out.println("Rooms added");
-            else
-                System.out.println("Rooms could not be added");
+            	start();
+            	
+            	Id = CURRENT_TRXN;
+	            location = obj.getString(arguments.elementAt(2));
+	            numRooms = obj.getInt(arguments.elementAt(3));
+	            price = obj.getInt(arguments.elementAt(4));
+	            
+	            if(rm.addRooms(Id, location, numRooms, price))
+	            {   	
+	            		autoCommit("Rooms added.");      	
+	            }
+	            else
+	            {
+	                System.out.println("Rooms could not be added");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+           	catch(Exception e){
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             
         case 5:  //new Customer
             if(arguments.size()!=2){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Adding a new Customer using id:"+arguments.elementAt(1));
+           
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer=rm.newCustomer(Id);
-            System.out.println("new customer id:"+customer);
+            	start();
+            	
+            	Id = CURRENT_TRXN;
+            	int customer=rm.newCustomer(Id);
+            	if (customer != -1)
+            	{
+            		autoCommit("New customer id: " + customer);      	
+
+            	}
+	            else
+	            {
+	                System.out.println("Customer could not be added");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             
@@ -248,8 +273,9 @@ public class Client
             System.out.println("Deleting a flight using id: "+arguments.elementAt(1));
             System.out.println("Flight Number: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            flightNum = obj.getInt(arguments.elementAt(2));
+            	//TODO delete flight
+            	Id = CURRENT_TRXN;
+            	flightNum = obj.getInt(arguments.elementAt(2));
             if(rm.deleteFlight(Id,flightNum))
                 System.out.println("Flight Deleted");
             else
@@ -270,8 +296,9 @@ public class Client
             System.out.println("Deleting the cars from a particular location  using id: "+arguments.elementAt(1));
             System.out.println("Car Location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO delete car
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             
             if(rm.deleteCars(Id,location))
                 System.out.println("Cars Deleted");
@@ -293,8 +320,9 @@ public class Client
             System.out.println("Deleting all rooms from a particular location  using id: "+arguments.elementAt(1));
             System.out.println("Room Location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO delete room
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             if(rm.deleteRooms(Id,location))
                 System.out.println("Rooms Deleted");
             else
@@ -315,8 +343,9 @@ public class Client
             System.out.println("Deleting a customer from the database using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO delete customer
+            	Id = CURRENT_TRXN;
+            	int customer = obj.getInt(arguments.elementAt(2));
             if(rm.deleteCustomer(Id,customer))
                 System.out.println("Customer Deleted");
             else
@@ -337,8 +366,9 @@ public class Client
             System.out.println("Querying a flight using id: "+arguments.elementAt(1));
             System.out.println("Flight number: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            flightNum = obj.getInt(arguments.elementAt(2));
+            	//TODO query flight
+            	Id = CURRENT_TRXN;
+            	flightNum = obj.getInt(arguments.elementAt(2));
             int seats=rm.queryFlight(Id,flightNum);
             System.out.println("Number of seats available:"+seats);
             }
@@ -357,8 +387,9 @@ public class Client
             System.out.println("Querying a car location using id: "+arguments.elementAt(1));
             System.out.println("Car location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO query car
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             numCars=rm.queryCars(Id,location);
             System.out.println("number of Cars at this location:"+numCars);
             }
@@ -377,8 +408,9 @@ public class Client
             System.out.println("Querying a room location using id: "+arguments.elementAt(1));
             System.out.println("Room location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO query room 
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             numRooms=rm.queryRooms(Id,location);
             System.out.println("number of Rooms at this location:"+numRooms);
             }
@@ -397,8 +429,9 @@ public class Client
             System.out.println("Querying Customer information using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO query customer info
+            	Id = CURRENT_TRXN;
+            	int customer = obj.getInt(arguments.elementAt(2));
             String bill=rm.queryCustomerInfo(Id,customer);
             System.out.println("Customer info:"+bill);
             }
@@ -417,8 +450,9 @@ public class Client
             System.out.println("Querying a flight Price using id: "+arguments.elementAt(1));
             System.out.println("Flight number: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            flightNum = obj.getInt(arguments.elementAt(2));
+            	//TODO query flight
+            	Id = CURRENT_TRXN;
+            	flightNum = obj.getInt(arguments.elementAt(2));
             price=rm.queryFlightPrice(Id,flightNum);
             System.out.println("Price of a seat:"+price);
             }
@@ -437,8 +471,9 @@ public class Client
             System.out.println("Querying a car price using id: "+arguments.elementAt(1));
             System.out.println("Car location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO query car
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             price=rm.queryCarsPrice(Id,location);
             System.out.println("Price of a car at this location:"+price);
             }
@@ -457,8 +492,9 @@ public class Client
             System.out.println("Querying a room price using id: "+arguments.elementAt(1));
             System.out.println("Room Location: "+arguments.elementAt(2));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            location = obj.getString(arguments.elementAt(2));
+            	//TODO query room
+            	Id = CURRENT_TRXN;
+            	location = obj.getString(arguments.elementAt(2));
             price=rm.queryRoomsPrice(Id,location);
             System.out.println("Price of Rooms at this location:"+price);
             }
@@ -478,8 +514,9 @@ public class Client
             System.out.println("Customer id: "+arguments.elementAt(2));
             System.out.println("Flight number: "+arguments.elementAt(3));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO reserve flight
+            	Id = CURRENT_TRXN;
+            	int customer = obj.getInt(arguments.elementAt(2));
             flightNum = obj.getInt(arguments.elementAt(3));
             if(rm.reserveFlight(Id,customer,flightNum))
                 System.out.println("Flight Reserved");
@@ -503,8 +540,9 @@ public class Client
             System.out.println("Location: "+arguments.elementAt(3));
             
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO reserve car
+            	Id = CURRENT_TRXN;
+            	int customer = obj.getInt(arguments.elementAt(2));
             location = obj.getString(arguments.elementAt(3));
             
             if(rm.reserveCar(Id,customer,location))
@@ -528,8 +566,9 @@ public class Client
             System.out.println("Customer id: "+arguments.elementAt(2));
             System.out.println("Location: "+arguments.elementAt(3));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO reserve room
+            	Id = CURRENT_TRXN; 
+            	int customer = obj.getInt(arguments.elementAt(2));
             location = obj.getString(arguments.elementAt(3));
             
             if(rm.reserveRoom(Id,customer,location))
@@ -557,8 +596,9 @@ public class Client
             System.out.println("Car to book?:"+arguments.elementAt(arguments.size()-2));
             System.out.println("Room to book?:"+arguments.elementAt(arguments.size()-1));
             try{
-            Id = obj.getInt(arguments.elementAt(1));
-            int customer = obj.getInt(arguments.elementAt(2));
+            	//TODO reserve itinerary
+            	Id = CURRENT_TRXN;
+            	int customer = obj.getInt(arguments.elementAt(2));
             @SuppressWarnings("rawtypes")
 			Vector flightNumbers = new Vector();
             for(int i=0;i<arguments.size()-6;i++)
@@ -595,10 +635,22 @@ public class Client
             }
             System.out.println("Adding a new Customer using id:"+arguments.elementAt(1) + " and cid " +arguments.elementAt(2));
             try{
-	            Id = obj.getInt(arguments.elementAt(1));
+	            start();
+            	
+            	Id = CURRENT_TRXN;
 	            Cid = obj.getInt(arguments.elementAt(2));
-	            boolean customer=rm.newCustomer(Id,Cid);
-	            System.out.println("new customer id:"+Cid);
+
+            	if (rm.newCustomer(Id,Cid))
+            	{
+            		autoCommit("New customer id: " + Cid);      	
+
+            	}
+	            else
+	            {
+	                System.out.println("Customer could not be added. Another client may be "
+	                		+ "holding a lock for this customer ID or it might already exist.");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
 	            System.out.println("EXCEPTION:");
