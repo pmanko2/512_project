@@ -177,7 +177,14 @@ public class ResourceManagerImpl implements ResourceManager
     protected int queryNum(int id, String key) 
     {
         Trace.info("RM::queryNum(" + id + ", " + key + ") called" );
-        ReservableItem curObj = (ReservableItem) readData( id, key);
+        
+        ReservableItem curObj = null;
+        
+        if ((curObj = (ReservableItem) readNonCommittedData( id ))==null)
+       	{
+        	curObj = (ReservableItem) readData( id, key);
+  		}
+        
         int value = 0;  
         if ( curObj != null ) {
             value = curObj.getCount();
@@ -187,9 +194,17 @@ public class ResourceManagerImpl implements ResourceManager
     }    
     
     // query the price of an item
-    protected int queryPrice(int id, String key) {
+    protected int queryPrice(int id, String key) 
+    {
         Trace.info("RM::queryCarsPrice(" + id + ", " + key + ") called" );
-        ReservableItem curObj = (ReservableItem) readData( id, key);
+        
+        ReservableItem curObj = null;
+        
+        if ((curObj = (ReservableItem) readNonCommittedData( id ))==null)
+       	{
+        	curObj = (ReservableItem) readData( id, key);
+  		}
+ 
         int value = 0; 
         if ( curObj != null ) {
             value = curObj.getPrice();
