@@ -458,7 +458,10 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean deleteCars(int id, String location) throws RemoteException {
 
-		return cars_rm.deleteCars(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Car.getKey(location));
+		args.put("location", location);
+		return tm.addOperation(id, cars_rm, OP_CODE.DELETE_CARS, args);
 	}
 
 	@Override
