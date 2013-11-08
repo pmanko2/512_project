@@ -33,6 +33,7 @@ public class MiddlewareImpl implements ResourceManager {
 
 	protected RMHashtable m_itemHT = new RMHashtable();
 	private RMHashtable non_committed_items = new RMHashtable();
+	private RMHashtable abort_items = new RMHashtable();
 
 	/**
 	 * Middleware takes care of all reservations - this is due to the inseparability of the 
@@ -217,8 +218,16 @@ public class MiddlewareImpl implements ResourceManager {
     public void abortOperation(int op_id) throws RemoteException, InvalidTransactionException
     {
   	
+    	//put back any old data (used for cases where the state of an object is changed
+    	//instead of having been simply newly created
+    	Customer cust = (Customer) abort_items.get("" + op_id);
+    	if (cust != null)
+    	{
+    		writeData(op_id, cust.getKey(), cust);
+    	}
+
     	//remove any temporary data from non_committed_items
-    	Customer cust = (Customer) non_committed_items.get("" + op_id);
+    	cust = (Customer) non_committed_items.get("" + op_id);
     	if (cust != null)
     	{
         	non_committed_items.remove(cust.getKey());
@@ -466,8 +475,10 @@ public class MiddlewareImpl implements ResourceManager {
 
 	@Override
 	public boolean deleteRooms(int id, String location) throws RemoteException {
-
-		return rooms_rm.deleteRooms(id, location);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Hotel.getKey(location));
+		args.put("location", location);
+		return tm.addOperation(id, rooms_rm, OP_CODE.DELETE_ROOMS, args);
 	}
 
 	 // Deletes customer from the database. 
@@ -475,10 +486,26 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean deleteCustomer(int id, int customerID)
         throws RemoteException
     {
-        Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
+    	HashMap<String, Object> args = new HashMap<String, Object>();
+        args.put("key", Customer.getKey(customerID));
+        args.put("cid", customerID);
+        args.put("customer_object", m_itemHT.get(Customer.getKey(customerID)));
+        
+    	return tm.addOperation(id, this, OP_CODE.DELETE_CUSTOMER, args);
+    }
+    
+    @SuppressWarnings("unchecked")
+	public boolean deleteCustomerExecute(int op_id, int cid) throws RemoteException 
+    {
+    	Trace.info("RM::deleteCustomer(" + op_id + ", " + cid + ") called" );
+    	
+    	Customer cust;
+        if ((cust = (Customer) readNonCommittedData( op_id ))==null)
+       	{
+        	cust = (Customer) readData( op_id, Customer.getKey(cid));
+  		}
         if ( cust == null ) {
-            Trace.warn("RM::deleteCustomer(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+            Trace.warn("RM::deleteCustomer(" + op_id + ", " + cid + ") failed--customer doesn't exist" );
             return false;
         } else {            
             // Increase the reserved numbers of all reservable items which the customer reserved. 
@@ -486,7 +513,7 @@ public class MiddlewareImpl implements ResourceManager {
             for (Enumeration e = reservationHT.keys(); e.hasMoreElements();) {        
                 String reservedkey = (String) (e.nextElement());
                 ReservedItem reserveditem = cust.getReservedItem(reservedkey);
-                Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
+                Trace.info("RM::deleteCustomer(" + op_id + ", " + cid + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times"  );
 
                 //determine whether this item is a flight,room, or car
                 String key = reserveditem.getKey();  
@@ -498,24 +525,27 @@ public class MiddlewareImpl implements ResourceManager {
     	        //if it's a flight
     	        if (tokens[0].equals("flight"))
     	        {
-    	        	flights_rm.itemUnReserved(id, customerID, key, reserveditem);
+    	        	flights_rm.itemUnReserved(op_id, cid, key, reserveditem);
     	        }
     	        //else if the item is a car
     	        else if (tokens[0].equals("car"))
     	        {
-    	        	cars_rm.itemUnReserved(id, customerID, key, reserveditem);
+    	        	cars_rm.itemUnReserved(op_id, cid, key, reserveditem);
     	        }
     	        //otherwise it's a room
     	        else
     	        {
-    	        	rooms_rm.itemUnReserved(id, customerID, key, reserveditem);
+    	        	rooms_rm.itemUnReserved(op_id, cid, key, reserveditem);
     	        }              
             }
+            //add customer object to abort_items so that if we abort the deletion we can put
+            //the customer back
+            abort_items.put("" + op_id, cust);
             
             // remove the customer from the storage
-            removeData(id, cust.getKey());
-            
-            Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") succeeded" );
+            removeData(op_id, cust.getKey());
+            //TODO save customer info incase of abortion
+            Trace.info("RM::deleteCustomer(" + op_id + ", " + cid + ") succeeded" );
             return true;
         } // if
     }

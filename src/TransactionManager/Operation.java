@@ -2,7 +2,10 @@ package TransactionManager;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -10,9 +13,14 @@ import LockManager.DeadlockException;
 import LockManager.LockManager;
 import LockManager.TrxnObj;
 import ResImpl.Car;
+import ResImpl.Customer;
 import ResImpl.Flight;
 import ResImpl.Hotel;
 import ResImpl.MiddlewareImpl;
+import ResImpl.RMHashtable;
+import ResImpl.RMItem;
+import ResImpl.ReservableItem;
+import ResImpl.ReservedItem;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -105,6 +113,36 @@ public class Operation {
 					
 					//call rm to delete car (not in a persisitent wayuntil committed)
 					return rm.deleteCars(OP_ID, (String)arguments.get("location"));
+					
+				case DELETE_ROOMS:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to delete car (not in a persisitent wayuntil committed)
+					return rm.deleteRooms(OP_ID, (String)arguments.get("location"));
+					
+				case DELETE_CUSTOMER:
+					
+					//acquire write lock for customer, as well as for all the reservations they have
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
+					
+					Customer cust = (Customer) arguments.get("customer_object");
+					RMHashtable reserved_items = cust.getReservations();
+
+					//obtain locks for all the reserverations they have - if any of these fail, return false;
+					for (Enumeration e = reserved_items.keys(); e.hasMoreElements();) {        
+		                String reservedkey = (String) (e.nextElement());
+		                ReservedItem reserveditem = cust.getReservedItem(reservedkey);
+			
+						if(!(lm.Lock(transaction_id, reservedkey, TrxnObj.WRITE)))
+						{
+							return false;
+						}
+					}
+
+					return ((MiddlewareImpl) rm).deleteCustomerExecute(OP_ID, (Integer)arguments.get("cid"));
+			
 				default:
 					
 					return false;

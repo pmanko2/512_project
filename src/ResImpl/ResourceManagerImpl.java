@@ -262,7 +262,12 @@ public class ResourceManagerImpl implements ResourceManager
 	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) throws RemoteException {
         ReservableItem item = getReservableItem(id, key);
 		Trace.info("RM::deleteCustomer(" + id + ", " + customerID + ") has reserved " + reserveditem.getKey() + "which is reserved" +  item.getReserved() +  " times and is still available " + item.getCount() + " times"  );
-        item.setReserved(item.getReserved()-reserveditem.getCount());
+       
+		//add the reservedItem to abort_items so that if the customer aborts their deletion the 
+		//old counts will be replaced
+		abort_items.put("" + id, reserveditem);
+		
+		item.setReserved(item.getReserved()-reserveditem.getCount());
         item.setCount(item.getCount()+reserveditem.getCount());
         return;
 	}
