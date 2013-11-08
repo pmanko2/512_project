@@ -6,7 +6,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import LockManager.LockManager;
-import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 /**
@@ -29,7 +28,7 @@ public class Transaction {
 		lm = l;
 		// create new timer and set it to go off in 5 minutes
 		timer = new Timer();
-		timer.schedule(new AbortTask(this), 1000);
+		timer.schedule(new AbortTask(this), 5*60*1000);
 	}
 	
 	/**
@@ -61,9 +60,9 @@ public class Transaction {
 		operations.add(o);
 		
 		//cancel current timer and create new timer with new time limit
-		timer.cancel();
-		timer = new Timer();
-		timer.schedule(new AbortTask(this), 5*60*1000);
+	//	timer.cancel();
+		//timer = new Timer();
+		//timer.schedule(new AbortTask(this), 5*60*1000);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)

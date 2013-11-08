@@ -944,6 +944,9 @@ public class Client
 			e.printStackTrace();
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (NullPointerException e)
+		{
+			System.out.println("The last transaction has already been terminated.");
 		}
 	}
         

@@ -69,7 +69,8 @@ public class Operation {
 		{
 			//string used to hold key for whatever item is being worked with
 			String key;
-
+			boolean to_return = false;
+			
 			switch(operation)
 			{
 				case ADD_FLIGHT:
@@ -170,11 +171,37 @@ public class Operation {
 					keys.add((String)arguments.get("customer_key"));
 					keys.add((String)arguments.get("flight_key"));
 
-
-					boolean to_return = false;
 					if (rm instanceof MiddlewareImpl)
 					{
 						to_return = ((MiddlewareImpl) rm).reserveFlightExecute(OP_ID, (Integer)arguments.get("cid"), (Integer)arguments.get("flightNum"));
+					}
+					return to_return;
+					
+				case RESERVE_CAR:
+					
+					//acquire write lock for customer, as well as the flight
+					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
+					lm.Lock(transaction_id, (String) arguments.get("car_key"), TrxnObj.WRITE);
+					keys.add((String)arguments.get("customer_key"));
+					keys.add((String)arguments.get("car_key"));
+
+					if (rm instanceof MiddlewareImpl)
+					{
+						to_return = ((MiddlewareImpl) rm).reserveCarExecute(OP_ID, (Integer)arguments.get("cid"), (String)arguments.get("location"));
+					}
+					return to_return;
+					
+				case RESERVE_ROOM:
+					
+					//acquire write lock for customer, as well as the flight
+					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
+					lm.Lock(transaction_id, (String) arguments.get("room_key"), TrxnObj.WRITE);
+					keys.add((String)arguments.get("customer_key"));
+					keys.add((String)arguments.get("room_key"));
+
+					if (rm instanceof MiddlewareImpl)
+					{
+						to_return = ((MiddlewareImpl) rm).reserveRoomExecute(OP_ID, (Integer)arguments.get("cid"), (String)arguments.get("location"));
 					}
 					return to_return;
 			

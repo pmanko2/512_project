@@ -712,11 +712,46 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException {
 
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("car_key", Car.getKey(location));
+		args.put("customer_key", Customer.getKey(customer));
+		args.put("cid", customer);
+		args.put("location", location);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("car_key"));
+		keys.add((String)args.get("customer_key"));
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, this, OP_CODE.RESERVE_CAR, args, keys);	
+	}
+	
+	
+	public boolean reserveCarExecute(int id, int customer, String location)
+			throws RemoteException {
+
         return reserveItem(id, customer, Car.getKey(location), location);
 	}
 
 	@Override
 	public boolean reserveRoom(int id, int customer, String location)
+			throws RemoteException {
+		
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("room_key", Hotel.getKey(location));
+		args.put("customer_key", Customer.getKey(customer));
+		args.put("cid", customer);
+		args.put("location", location);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("room_key"));
+		keys.add((String)args.get("customer_key"));
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, this, OP_CODE.RESERVE_ROOM, args, keys);	
+	}
+	
+	public boolean reserveRoomExecute(int id, int customer, String location)
 			throws RemoteException {
 
         return reserveItem(id, customer, Hotel.getKey(location), location);
