@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -367,8 +368,11 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("flightSeats", flightSeats);
 		args.put("flightPrice", flightPrice);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args);
+		return tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args, keys);
 	}
 
 	@Override
@@ -381,8 +385,11 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("numCars", numCars);
 		args.put("price", price);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args);
+		return tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args, keys);
 	}
 
 	@Override
@@ -395,8 +402,11 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("numRooms", numRooms);
 		args.put("price", price);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, rooms_rm, OP_CODE.ADD_ROOMS, args);
+		return tm.addOperation(id, rooms_rm, OP_CODE.ADD_ROOMS, args, keys);
 	}
 
 	// customer functions
@@ -413,7 +423,11 @@ public class MiddlewareImpl implements ResourceManager {
                                 String.valueOf( Math.round( Math.random() * 100 + 1 )));
         args.put("key", Customer.getKey(cid));
         args.put("cid", cid);
-        return tm.addOperationIntReturn(id, this, OP_CODE.NEW_CUSTOMER, args);
+        
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+        return tm.addOperationIntReturn(id, this, OP_CODE.NEW_CUSTOMER, args, keys);
     }
     
     /**
@@ -456,7 +470,10 @@ public class MiddlewareImpl implements ResourceManager {
         args.put("key", Customer.getKey(customerID));
         args.put("cid", customerID);
         
-    	return tm.addOperation(id, this, OP_CODE.NEW_CUSTOMER_ID, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+    	return tm.addOperation(id, this, OP_CODE.NEW_CUSTOMER_ID, args, keys);
     }
 
 	@Override
@@ -466,7 +483,11 @@ public class MiddlewareImpl implements ResourceManager {
 	
 		args.put("key",  Flight.getKey(flightNum));
 		args.put("flightNum", flightNum);
-		return tm.addOperation(id, flights_rm, OP_CODE.DELETE_FLIGHT, args);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperation(id, flights_rm, OP_CODE.DELETE_FLIGHT, args, keys);
 	}
 
 	@Override
@@ -475,7 +496,11 @@ public class MiddlewareImpl implements ResourceManager {
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
-		return tm.addOperation(id, cars_rm, OP_CODE.DELETE_CARS, args);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperation(id, cars_rm, OP_CODE.DELETE_CARS, args, keys);
 	}
 
 	@Override
@@ -483,7 +508,11 @@ public class MiddlewareImpl implements ResourceManager {
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
-		return tm.addOperation(id, rooms_rm, OP_CODE.DELETE_ROOMS, args);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperation(id, rooms_rm, OP_CODE.DELETE_ROOMS, args, keys);
 	}
 
 	 // Deletes customer from the database. 
@@ -496,7 +525,10 @@ public class MiddlewareImpl implements ResourceManager {
         args.put("cid", customerID);
         args.put("customer_object", m_itemHT.get(Customer.getKey(customerID)));
         
-    	return tm.addOperation(id, this, OP_CODE.DELETE_CUSTOMER, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+    	return tm.addOperation(id, this, OP_CODE.DELETE_CUSTOMER, args, keys);
     }
     
     @SuppressWarnings("unchecked")
@@ -563,8 +595,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Flight.getKey(flightNumber));
 		args.put("flightNum", flightNumber);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
 		
-		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args);
+		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args, keys);
 	}
 
 	@Override
@@ -574,7 +608,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		
-		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args, keys);
 	}
 
 	@Override
@@ -584,7 +621,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		
-		return tm.addOperationIntReturn(id, rooms_rm, OP_CODE.QUERY_CARS, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperationIntReturn(id, rooms_rm, OP_CODE.QUERY_CARS, args, keys);
 	}
 
 	   // return a bill
@@ -613,8 +653,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Flight.getKey(flightNumber));
 		args.put("flightNum", flightNumber);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
 		
-		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHT_PRICE, args);
+		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHT_PRICE, args, keys);
 	}
 
 	@Override
@@ -624,7 +666,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		
-		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CAR_PRICE, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CAR_PRICE, args, keys);
 	}
 
 	@Override
@@ -634,7 +679,10 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		
-		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_ROOM_PRICE, args);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_ROOM_PRICE, args, keys);
 	}
 
 	@Override
@@ -647,13 +695,16 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("cid", customer);
 		args.put("flightNum", flightNumber);
 		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("flight_key"));
+		keys.add((String)args.get("customer_key"));
+		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args);
+		return tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args, keys);
 	}
 	
 	public boolean reserveFlightExecute(int id, int customer, int flightNumber)
 	{
-		Trace.info("Reserve flight execute is called");
         return reserveItem(id, customer, Flight.getKey(flightNumber), String.valueOf(flightNumber));
 	}
 

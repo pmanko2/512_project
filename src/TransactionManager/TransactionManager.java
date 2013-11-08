@@ -60,14 +60,14 @@ public class TransactionManager {
 	 * @param transaction_id
 	 * @return
 	 */
-	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
-		return transaction_table.get("" + transaction_id).addOperation(r, op, args);
+		return transaction_table.get("" + transaction_id).addOperation(r, op, args, keys);
 	}
 	
-	public int addOperationIntReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	public int addOperationIntReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
-		return transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args);
+		return transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args, keys);
 	}
 
 	public void enlist()

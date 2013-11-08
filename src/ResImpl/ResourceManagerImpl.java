@@ -105,6 +105,7 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public void abort(int op_id)
     {
+    	Trace.info("THIS WAS CALLED");
     	//put back any old data (used for cases where the state of an object is changed
     	//instead of having been simply newly created
     	ReservableItem item = (ReservableItem) abort_items.get("" + op_id);
@@ -130,7 +131,12 @@ public class ResourceManagerImpl implements ResourceManager
     //Reads a data item from uncomitted data
     private RMItem readNonCommittedData( int id )
     {
-            return (RMItem) non_committed_items.get("" + id);
+         RMItem item = (RMItem) non_committed_items.get("" + id);
+        /*if (item == null)
+        {
+        	item = (RMItem) non_committed_items.get(key);
+        }*/
+        return item;
     }
 
     // Writes a data item
@@ -324,6 +330,7 @@ public class ResourceManagerImpl implements ResourceManager
             non_committed_items.put("" + id, newObj);
             return true;
         } else {
+        	//TODO add check to make sure not putting object before commit into abort table
         	//Creates a copy of the current object and adds to items that need to be written back on abort
         	Flight tempObj = new Flight (Integer.parseInt(curObj.getLocation()), curObj.getCount(), curObj.getPrice());
         	tempObj.setReserved(curObj.getReserved());
