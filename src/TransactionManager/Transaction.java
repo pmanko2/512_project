@@ -58,6 +58,17 @@ public class Transaction {
 		return o.execute();
 	}
 	
+	public int addOperationIntReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	{
+		//create operation and add to operation queue
+		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
+		operations.add(o);
+		
+		//attempt to acquire necessary locks and execute transaction. This returns true 
+		//if the operation was able to successfully obtain locks execute (locally!)
+		return o.executeIntReturn();
+	}
+	
 	/**
 	 * Commits this transaction
 	 * @return True once the commit succeeds (we assume that once commit is called 

@@ -32,7 +32,8 @@ public class MiddlewareImpl implements ResourceManager {
     private static TransactionManager tm = null;
 
 	protected RMHashtable m_itemHT = new RMHashtable();
-	
+	private RMHashtable non_committed_items = new RMHashtable();
+
 	/**
 	 * Middleware takes care of all reservations - this is due to the inseparability of the 
 	 * information in the Customer class.
@@ -187,6 +188,20 @@ public class MiddlewareImpl implements ResourceManager {
     {
     	return tm.commit(transaction_id);
     }
+
+    /**
+     * Commit operation with ID
+     */
+    public boolean commitOperation(int op_id) throws RemoteException, InvalidTransactionException
+    {
+    	Customer item =(Customer)non_committed_items.get("" + op_id);
+    	if (item != null)
+    	{
+        	writeData(op_id, item.getKey(), item);
+        	non_committed_items.remove("" + op_id);
+    	}
+    	return true;
+    }
     
     /**
      * Abort transaction with id transaction_id
@@ -195,6 +210,20 @@ public class MiddlewareImpl implements ResourceManager {
     {
     	tm.abort(transaction_id);
     }
+    
+    /**
+     * Abort operation with ID. 
+     */
+    public void abortOperation(int op_id) throws RemoteException, InvalidTransactionException
+    {
+  	
+    	//remove any temporary data from non_committed_items
+    	Customer cust = (Customer) non_committed_items.get("" + op_id);
+    	if (cust != null)
+    	{
+        	non_committed_items.remove(cust.getKey());
+    	}
+    }
 	
     // Reads a data item
     private RMItem readData( int id, String key )
@@ -202,6 +231,12 @@ public class MiddlewareImpl implements ResourceManager {
         synchronized(m_itemHT) {
             return (RMItem) m_itemHT.get(key);
         }
+    }
+    
+    //Reads a data item from uncomitted data
+    private RMItem readNonCommittedData( int id )
+    {
+            return (RMItem) non_committed_items.get("" + id);
     }
 
     // Writes a data item
@@ -356,34 +391,58 @@ public class MiddlewareImpl implements ResourceManager {
     public int newCustomer(int id)
         throws RemoteException
     {
-    	//TODO add return -1 if locks fail
-        Trace.info("INFO: RM::newCustomer(" + id + ") called" );
+    	HashMap<String, Object> args = new HashMap<String, Object>();
+    	
         // Generate a globally unique ID for the new customer
         int cid = Integer.parseInt( String.valueOf(id) +
                                 String.valueOf(Calendar.getInstance().get(Calendar.MILLISECOND)) +
                                 String.valueOf( Math.round( Math.random() * 100 + 1 )));
-        Customer cust = new Customer( cid );
-        writeData( id, cust.getKey(), cust );
-        Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid );
-        return cid;
+        args.put("key", Customer.getKey(cid));
+        args.put("cid", cid);
+        return tm.addOperationIntReturn(id, this, OP_CODE.NEW_CUSTOMER, args);
+    }
+    
+    /**
+     * Method which executes new customer here in Middleware (not accessible to client,
+     * and the changes it makes are not persistent until the operation that called it
+     * has been committed
+     * @param op_id
+     * @param cid
+     * @return
+     */
+    public int newCustomerExecute(int op_id, int cid)
+    {
+        Trace.info("INFO: RM::newCustomer(" + cid + ") called" );
+        
+        Customer cust;
+        
+        if ((cust = (Customer) readNonCommittedData( op_id ))==null)
+       	{
+        	cust = (Customer) readData( op_id, Customer.getKey(cid));
+  		}
+        if ( cust == null ) {
+            cust = new Customer(cid);
+            non_committed_items.put("" + op_id, cust);
+            Trace.info("INFO: RM::newCustomer(" + op_id + ", " + cid + ") created a new customer" );
+            Trace.info("RM::newCustomer(" + cid + ") returns ID=" + cid );
+            return cid;
+        }
+        else
+        {
+            Trace.info("INFO: RM::newCustomer(" + op_id + ", " + cid + ") failed--customer already exists");
+        	return -1;
+        }
     }
 
     // I opted to pass in customerID instead. This makes testing easier
     public boolean newCustomer(int id, int customerID )
         throws RemoteException
     {
-    	//TODO add return -1 if locks fail
-        Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
-        if ( cust == null ) {
-            cust = new Customer(customerID);
-            writeData( id, cust.getKey(), cust );
-            Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") created a new customer" );
-            return true;
-        } else {
-            Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") failed--customer already exists");
-            return false;
-        } // else
+    	HashMap<String, Object> args = new HashMap<String, Object>();
+        args.put("key", Customer.getKey(customerID));
+        args.put("cid", customerID);
+        
+    	return tm.addOperation(id, this, OP_CODE.NEW_CUSTOMER_ID, args);
     }
 
 	@Override

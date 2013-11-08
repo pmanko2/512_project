@@ -94,7 +94,11 @@ public class Client
         
         
         System.out.println("\n\n\tClient Interface");
-        System.out.println("Type \"help\" for list of supported commands");
+        System.out.println("Type \"help\" for list of supported commands.");
+        System.out.println("\nType start to start a new transaction. To terminate a"
+        		+ " transaction, type commit to save changes or abort to discard changes.");
+        System.out.println("\nIf you do not start a transaction before performing an operation,"
+        		+ " a transaction will be started for you and will attempt to commit automatically.");
         while(true){
         System.out.print("\n>");
         try{
@@ -207,7 +211,6 @@ public class Client
             System.out.println("Set Price: "+arguments.elementAt(4));
            
             try{
-            	//TODO new room
             	start();
             	
             	Id = CURRENT_TRXN;
@@ -234,20 +237,31 @@ public class Client
             
         case 5:  //new Customer
             if(arguments.size()!=2){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Adding a new Customer using id:"+arguments.elementAt(1));
+           
             try{
-            	//TODO new customer
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	int customer=rm.newCustomer(Id);
-            System.out.println("new customer id:"+customer);
+            	if (customer != -1)
+            	{
+            		autoCommit("New customer id: " + customer);      	
+
+            	}
+	            else
+	            {
+	                System.out.println("Customer could not be added");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             
@@ -621,10 +635,22 @@ public class Client
             }
             System.out.println("Adding a new Customer using id:"+arguments.elementAt(1) + " and cid " +arguments.elementAt(2));
             try{
-	            Id = obj.getInt(arguments.elementAt(1));
+	            start();
+            	
+            	Id = CURRENT_TRXN;
 	            Cid = obj.getInt(arguments.elementAt(2));
-	            boolean customer=rm.newCustomer(Id,Cid);
-	            System.out.println("new customer id:"+Cid);
+
+            	if (rm.newCustomer(Id,Cid))
+            	{
+            		autoCommit("New customer id: " + Cid);      	
+
+            	}
+	            else
+	            {
+	                System.out.println("Customer could not be added. Another client may be "
+	                		+ "holding a lock for this customer ID or it might already exist.");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
 	            System.out.println("EXCEPTION:");

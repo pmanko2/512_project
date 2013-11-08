@@ -309,7 +309,6 @@ public class ResourceManagerImpl implements ResourceManager
     public boolean addRooms(int id, String location, int count, int price)
         throws RemoteException
     {
-    	//TODO
         Trace.info("RM::addRooms(" + id + ", " + location + ", " + count + ", $" + price + ") called" );
         Hotel curObj;
         if ((curObj = (Hotel) readNonCommittedData( id ))==null)
@@ -603,4 +602,10 @@ public class ResourceManagerImpl implements ResourceManager
     {
         return false;
     }
+
+	@Override
+	public int newCustomerExecute(int op_id, int cid) throws RemoteException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
