@@ -19,13 +19,12 @@ public class TransactionManager {
 
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
-	private static int transaction_id_counter;
+	private static int transaction_id_counter = 0;
 	private static LockManager lm;
 
 	public TransactionManager()
 	{
 		transaction_table = new Hashtable<String, Transaction>();
-		transaction_id_counter = 0;
 		lm = new LockManager();
 	}
 	
@@ -70,6 +69,12 @@ public class TransactionManager {
 		return transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args, keys);
 	}
 
+	public String addOperationStringReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	{
+		return transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
+	}
+
+	
 	public void enlist()
 	{
 		

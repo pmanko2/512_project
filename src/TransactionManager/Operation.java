@@ -6,6 +6,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Vector;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -179,7 +180,7 @@ public class Operation {
 					
 				case RESERVE_CAR:
 					
-					//acquire write lock for customer, as well as the flight
+					//acquire write lock for customer, as well as the car
 					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
 					lm.Lock(transaction_id, (String) arguments.get("car_key"), TrxnObj.WRITE);
 					keys.add((String)arguments.get("customer_key"));
@@ -193,7 +194,7 @@ public class Operation {
 					
 				case RESERVE_ROOM:
 					
-					//acquire write lock for customer, as well as the flight
+					//acquire write lock for customer, as well as the room
 					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
 					lm.Lock(transaction_id, (String) arguments.get("room_key"), TrxnObj.WRITE);
 					keys.add((String)arguments.get("customer_key"));
@@ -205,6 +206,44 @@ public class Operation {
 					}
 					return to_return;
 			
+				case ITINERARY:
+					
+					//acquire write lock for customer, as well as all the other things to be booked
+					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
+					keys.add((String)arguments.get("customer_key"));
+
+					//if room is desired, lock room key
+					if ((Boolean)arguments.get("room_boolean"))
+					{
+						lm.Lock(transaction_id, (String) arguments.get("room_key"), TrxnObj.WRITE);
+						keys.add((String)arguments.get("room_key"));
+					}
+					//if car is desired, lock car key
+					if ((Boolean)arguments.get("car_boolean"))
+					{
+						lm.Lock(transaction_id, (String) arguments.get("car_key"), TrxnObj.WRITE);
+						keys.add((String)arguments.get("car_key"));
+					}
+					
+					//lock all flight keys
+					Vector flightNumbers = (Vector)arguments.get("flightNumbers");
+					Iterator it = flightNumbers.iterator();
+					while (it.hasNext())
+					{
+						String temp_key = (String)it.next();
+						lm.Lock(transaction_id, temp_key, TrxnObj.WRITE);
+					}
+					
+					if (rm instanceof MiddlewareImpl)
+		  			{
+						to_return = ((MiddlewareImpl) rm).itineraryExecute(OP_ID, (Integer)arguments.get("cid"), 
+																			(Vector)arguments.get("flightNumbers"),
+																			(String)arguments.get("location"),
+																			(Boolean)arguments.get("car_boolean"),
+																			(Boolean)arguments.get("car_boolean"));
+					}
+					return to_return;
+					
 				default:
 					
 					return false;
@@ -263,8 +302,8 @@ public class Operation {
 					
 				case QUERY_ROOM_PRICE:
 					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
-					return rm.queryRoomsPrice(OP_ID, (String) arguments.get("location"));
-
+					return rm.queryRoomsPrice(OP_ID, (String) arguments.get("location"));					
+					
 				default:
 					
 					return -1;
@@ -277,6 +316,48 @@ public class Operation {
 			e.printStackTrace();
 		}
 		return -1;
+	}
+	
+	/**
+	 * Method used to execute functions that return a boolean value. The result of these
+	 * executions are not persistent until they are committed.
+	 * @return
+	 */
+	public String executeStringReturn()
+	{
+		try 
+		{
+			//string used to hold key for whatever item is being worked with
+			String key;
+
+			switch(operation)
+			{
+				case QUERY_CUSTOMER_INFO:
+					
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.READ);
+					if (rm instanceof MiddlewareImpl)
+					{
+						return ((MiddlewareImpl) rm).queryCustomerInfoExecute(OP_ID, (Integer) arguments.get("cid"));					
+					}
+					else
+					{
+						return null;
+					}
+
+				default:
+					
+					return null;
+			}
+		}
+		catch (DeadlockException e)
+		{
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	/**
