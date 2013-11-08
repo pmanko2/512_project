@@ -5,7 +5,7 @@
 #http://www.linuxproblem.org/art_9.html
 
 #Info for servers
-SERVER_HOSTS="lab2-1.cs.mcgill.ca lab2-11.cs.mcgill.ca lab2-14.cs.mcgill.ca"
+SERVER_HOSTS="lab2-1.cs.mcgill.ca lab2-15.cs.mcgill.ca lab2-14.cs.mcgill.ca"
 MIDDLEWARE_HOST="teaching.cs.mcgill.ca"
 USERNAME=nwebst1
 

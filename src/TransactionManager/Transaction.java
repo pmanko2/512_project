@@ -28,18 +28,9 @@ public class Transaction {
 		operations = new ArrayList<Operation>();
 		lm = l;
 		// create new timer and set it to go off in 5 minutes
-		timer = new Timer();
-		abortTransaction = new AbortTask(this);
-		timer.schedule(abortTransaction, 5*60*1000);
-	}
-	
-	/**
-	 * Returns an arraylist of key strings which is used to obtain the locks necessary to carry out this transaction.
-	 * @return ArrayList<String> of Keys for the objects that need to be modified for this transaction to occur.
-	 */
-	public ArrayList<String> getKeys()
-	{
-		return null;
+		//timer = new Timer();
+		//abortTransaction = new AbortTask(this);
+		//timer.schedule(abortTransaction, 5*60*1000);
 	}
 	
 	/**
@@ -63,9 +54,9 @@ public class Transaction {
 		
 		//cancel current timer and create new timer with new time limit
 	
-		abortTransaction.cancel();
+	/*	abortTransaction.cancel();
 		abortTransaction = new AbortTask(this);
-		timer.schedule(abortTransaction, 5*60*1000);
+		timer.schedule(abortTransaction, 5*60*1000);*/
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
@@ -81,6 +72,17 @@ public class Transaction {
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
 		return o.executeIntReturn();
+	}
+	
+	public String addOperationStringReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	{
+		//create operation and add to operation queue
+		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
+		operations.add(o);
+		
+		//attempt to acquire necessary locks and execute transaction. This returns true 
+		//if the operation was able to successfully obtain locks execute (locally!)
+		return o.executeStringReturn();
 	}
 	
 	//this method creates an operation - replaces an operation if the key and the 
@@ -109,6 +111,13 @@ public class Transaction {
 							same_operation = false;
 						}
 					}
+					if (tokens[0].equals("customer") && keys.size() == 1)
+					{
+						if (!(o_keys.contains(k)))
+						{
+							same_operation = false;
+						}
+					} 
 				}
 			//}
 			//if this is the same operation, create new operation with the same op_id
@@ -135,7 +144,7 @@ public class Transaction {
 			o.commit();
 		}
 		lm.UnlockAll(TRANSACTION_ID);
-		timer.cancel();
+//		timer.cancel();
 		
 		return true;
 	}
@@ -150,7 +159,7 @@ public class Transaction {
 			o.abort();
 		}
 		lm.UnlockAll(TRANSACTION_ID);
-		timer.cancel();
+//		timer.cancel();
 	}
 	
 	class AbortTask extends TimerTask

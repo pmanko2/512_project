@@ -57,7 +57,7 @@ public class MiddlewareImpl implements ResourceManager {
          */
         String cars_server = "lab2-1.cs.mcgill.ca";        
         String flights_server = "lab2-11.cs.mcgill.ca";
-        String rooms_server = "lab2-14.cs.mcgill.ca";
+        String rooms_server = "lab2-15.cs.mcgill.ca";
         
         int rm_port = 7707;
 
@@ -315,8 +315,9 @@ public class MiddlewareImpl implements ResourceManager {
 	        	//create a copy of the customer to be committed or disarded on abort with changes
 	        	Customer temp = new Customer(cid);
 	        	temp.setReservations((RMHashtable)cust.getReservations().clone());
-     	        temp.reserve( key, location, item.getPrice());        
-	        	non_committed_items.put("" + op_id, temp);
+	        	abort_items.put("" + op_id, temp);
+     	        cust.reserve( key, location, item.getPrice());        
+	        	non_committed_items.put("" + op_id, cust);
 	            
 	            // decrease the number of available items in the storage
 	            boolean resource_updated = false;
@@ -379,6 +380,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addCars(int id, String location, int numCars, int price)
 			throws RemoteException {
 		
+		long start = System.currentTimeMillis();
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
@@ -389,7 +391,10 @@ public class MiddlewareImpl implements ResourceManager {
 		keys.add((String)args.get("key"));
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args, keys);
+		boolean to_return = tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args, keys);
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
 	}
 
 	@Override
@@ -591,6 +596,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryFlight(int id, int flightNumber) throws RemoteException {
 
+		long start = System.currentTimeMillis();
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("key", Flight.getKey(flightNumber));
 		args.put("flightNum", flightNumber);
@@ -598,12 +604,17 @@ public class MiddlewareImpl implements ResourceManager {
 		ArrayList<String> keys = new ArrayList<String>();
 		keys.add((String)args.get("key"));
 		
-		return tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args, keys);
+		int to_return = tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args, keys);
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
 	}
 
 	@Override
 	public int queryCars(int id, String location) throws RemoteException {
 
+		long start = System.currentTimeMillis();
+		
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
@@ -611,7 +622,10 @@ public class MiddlewareImpl implements ResourceManager {
 		ArrayList<String> keys = new ArrayList<String>();
 		keys.add((String)args.get("key"));
 		
-		return tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args, keys);
+		int to_return = tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args, keys);
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
 	}
 
 	@Override
@@ -631,18 +645,40 @@ public class MiddlewareImpl implements ResourceManager {
     public String queryCustomerInfo(int id, int customerID)
         throws RemoteException
     {
-        Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + ") called" );
-        Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
-        if ( cust == null ) {
-            Trace.warn("RM::queryCustomerInfo(" + id + ", " + customerID + ") failed--customer doesn't exist" );
-            return "";   // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
-        } else {
-                String s = cust.printBill();
-                Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + "), bill follows..." );
-                System.out.println( s );
-                return s;
-        } // if
+    	long start = System.currentTimeMillis();
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Customer.getKey(customerID));
+		args.put("cid", customerID);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("key"));
+		
+		String to_return = tm.addOperationStringReturn(id, this, OP_CODE.QUERY_CUSTOMER_INFO, args, keys);
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
     }
+    
+    public String queryCustomerInfoExecute(int id, int customerID)
+            throws RemoteException
+        {
+            Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + ") called" );
+            Customer cust;
+            
+            if ((cust = (Customer) readNonCommittedData( id ))==null)
+           	{
+            	cust = (Customer) readData( id, Customer.getKey(customerID));
+      		}           
+            if ( cust == null ) {
+                Trace.warn("RM::queryCustomerInfo(" + id + ", " + customerID + ") failed--customer doesn't exist" );
+                return "";   // NOTE: don't change this--WC counts on this value indicating a customer does not exist...
+            } else {
+                    String s = cust.printBill();
+                    Trace.info("RM::queryCustomerInfo(" + id + ", " + customerID + "), bill follows..." );
+                    System.out.println( s );
+                    return s;
+            } // if
+        }
 
 
 	@Override
@@ -711,7 +747,9 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean reserveCar(int id, int customer, String location)
 			throws RemoteException {
-
+		
+		long start = System.currentTimeMillis();
+		
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("car_key", Car.getKey(location));
 		args.put("customer_key", Customer.getKey(customer));
@@ -723,7 +761,10 @@ public class MiddlewareImpl implements ResourceManager {
 		keys.add((String)args.get("customer_key"));
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, this, OP_CODE.RESERVE_CAR, args, keys);	
+		boolean to_return = tm.addOperation(id, this, OP_CODE.RESERVE_CAR, args, keys);	
+		long end = System.currentTimeMillis();
+		Trace.info(""+(end-start));
+		return to_return;
 	}
 	
 	
@@ -737,6 +778,8 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean reserveRoom(int id, int customer, String location)
 			throws RemoteException {
 		
+		long start = System.currentTimeMillis();
+		
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("room_key", Hotel.getKey(location));
 		args.put("customer_key", Customer.getKey(customer));
@@ -748,7 +791,10 @@ public class MiddlewareImpl implements ResourceManager {
 		keys.add((String)args.get("customer_key"));
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, this, OP_CODE.RESERVE_ROOM, args, keys);	
+		boolean to_return = tm.addOperation(id, this, OP_CODE.RESERVE_ROOM, args, keys);	
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
 	}
 	
 	public boolean reserveRoomExecute(int id, int customer, String location)
@@ -762,7 +808,40 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean itinerary(int id, int customer, Vector flightNumbers,
 			String location, boolean car, boolean room) throws RemoteException {
 
+		long start = System.currentTimeMillis();
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("customer_key", Customer.getKey(customer));
+		args.put("cid", customer);
+		args.put("flightNumbers", flightNumbers);
+		args.put("location", location);
+		args.put("room_key", Hotel.getKey(location));
+		args.put("car_key", Car.getKey(location));
+		args.put("car_boolean", car);
+		args.put("room_boolean", room);
+		
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add((String)args.get("room_key"));
+		keys.add((String)args.get("car_key"));
+		Iterator it = flightNumbers.iterator();
+		while (it.hasNext())
+		{
+			int flight_num = (new Integer((String)it.next())).intValue();
+			keys.add(Flight.getKey(flight_num));
+		}
+		keys.add((String)args.get("customer_key"));
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		boolean to_return = tm.addOperation(id, this, OP_CODE.ITINERARY, args, keys);	
+		long end = System.currentTimeMillis();
+		Trace.info("" + (end-start));
+		return to_return;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public boolean itineraryExecute(int id, int customer, Vector flightNumbers,
+			String location, boolean car, boolean room) throws RemoteException {
 		boolean confirmation = true;
+		
 		
     	//for each flight in flightNumbers, reserve flight
 		Iterator i = flightNumbers.iterator();
@@ -771,18 +850,22 @@ public class MiddlewareImpl implements ResourceManager {
 			Object flight_number_object = i.next();
 			int flightNumberInt = Integer.parseInt(flight_number_object.toString());
 			confirmation = reserveItem(id, customer, Flight.getKey(flightNumberInt), String.valueOf(flightNumberInt));
+			Trace.info("Flight no: " + flightNumberInt + " is booked?: " + confirmation);
 		}
 		
 		//if there was a car to be reserved as well
 		if (car)
 		{
 			confirmation = reserveItem(id, customer, Car.getKey(location), location);
+			Trace.info("Car: is booked?: " + confirmation);
+
 		}
 		
 		//if there was a room to be reserved as well
 		if (room)
 		{
 			confirmation = reserveItem(id, customer, Hotel.getKey(location), location);
+			Trace.info("Room: is booked?: " + confirmation);
 		}
 		
 		return confirmation;
