@@ -125,7 +125,6 @@ public class AnalysisClient
      			NUM_TRANSACTIONS = Integer.parseInt(numIterationsString);
      			correctInput = true;
      		} catch (IOException e1) {
-     			// TODO Auto-generated catch block
      			e1.printStackTrace();
      		} catch(NumberFormatException notNumber){
      			System.out.println("Incorrect input, please try again");

@@ -1,6 +1,7 @@
 package TransactionManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import LockManager.LockManager;
 import ResInterface.ResourceManager;
@@ -46,7 +47,7 @@ public class Transaction {
 	 * Adds an operation to this transaction
 	 * @param o
 	 */
-	public boolean addOperation(ResourceManager r, OP_CODE op, ArrayList<Object> args)
+	public boolean addOperation(ResourceManager r, OP_CODE op, HashMap<String, Object> args)
 	{
 		//create operation and add to operation queue
 		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
@@ -59,41 +60,16 @@ public class Transaction {
 	
 	/**
 	 * Commits this transaction
-	 * @return True if commit succeeded; otherwise, returns false.
+	 * @return True once the commit succeeds (we assume that once commit is called 
+	 * that it will succeed so we don't check if anything failed
 	 */
 	public boolean commit()
-	{
-		boolean transaction_committed = true;
-		boolean[] operation_success = new boolean[operations.size()];
-		
-		for (int i = 0; i < operations.size(); i++)
+	{		
+		for (Operation o : operations)
 		{
-			Operation o = operations.get(i);
-			
-			if (o.commit())
-			{
-				operation_success[i] = true;
-			}
-			else
-			{
-				operation_success[i] = false;
-				transaction_committed = false;
-			}
+			o.commit();
 		}
-		//if any of the transactions failed, undo the operations that succeeded
-		if (!transaction_committed)
-		{
-			for (int i = 0; i < operations.size(); i++)
-			{
-				//undo successful operations
-				if (operation_success[i])
-				{
-					Operation o = operations.get(i);
-					o.abort();
-				}
-			}
-		}
-		return transaction_committed;
+		return true;
 	}
 	
 	/**

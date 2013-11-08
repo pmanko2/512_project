@@ -2,6 +2,7 @@ package TransactionManager;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -10,19 +11,20 @@ import LockManager.LockManager;
 import LockManager.TrxnObj;
 import ResImpl.Car;
 import ResImpl.Flight;
+import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 public class Operation {
 
 	private ResourceManager rm;
 	private OP_CODE operation;
-	private ArrayList<Object> arguments;
+	private HashMap<String, Object> arguments;
 	private LockManager lm;
 	private int transaction_id;
 	private static int operation_count = 0;
 	private final int OP_ID;
 	
-	public Operation(int id, ResourceManager r, OP_CODE op, ArrayList<Object> args, LockManager l)
+	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l)
 	{
 		transaction_id = id;
 		rm = r;
@@ -43,26 +45,23 @@ public class Operation {
 			switch(operation)
 			{
 				case ADD_FLIGHT:
-					//acquire item key
-					key = Flight.getKey((Integer)arguments.get(0));
-					
+				
 					//acquire write lock
-					lm.Lock(transaction_id, key, TrxnObj.WRITE);
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
 					
 					//call rm to create a non-committed RMItem
-					return rm.addFlight(OP_ID, (Integer)arguments.get(0), (Integer)arguments.get(1), (Integer)arguments.get(2));
+					return rm.addFlight(OP_ID, (Integer)arguments.get("flightNum"), (Integer)arguments.get("flightSeats"), (Integer)arguments.get("flightPrice"));
+
 				case ADD_CARS:
-					//acquire item key
-					key = Car.getKey((String)arguments.get(0));
 					
 					//acquire write lock
-					lm.Lock(transaction_id, key, TrxnObj.WRITE);
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
 					
 					//call rm to create a non-committed RMItem
-					return rm.addCars(OP_ID, (String)arguments.get(0), (Integer)arguments.get(1), (Integer)arguments.get(2));
-					
-					
+					return rm.addCars(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numCars"), (Integer)arguments.get("price"));
+										
 				default:
+					
 					return false;
 			}
 		}

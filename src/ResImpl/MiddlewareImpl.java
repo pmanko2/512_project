@@ -8,6 +8,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -310,11 +311,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException {
 			
-		ArrayList<Object> args = new ArrayList<Object>();
-		args.add(flightNum);
-		args.add(flightSeats);
-		args.add(flightPrice);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Flight.getKey(flightNum));
+		args.put("flightNum", flightNum);
+		args.put("flightSeats", flightSeats);
+		args.put("flightPrice", flightPrice);
 		
+		Trace.info("" + id);
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		return tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args);
 	}
@@ -323,11 +326,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addCars(int id, String location, int numCars, int price)
 			throws RemoteException {
 		
-		ArrayList<Object> args = new ArrayList<Object>();
-		args.add(location);
-		args.add(numCars);
-		args.add(price);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Car.getKey(location));
+		args.put("location", location);
+		args.put("numCars", numCars);
+		args.put("price", price);
 		
+		Trace.info("" + id);
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		return tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args);
 	}
