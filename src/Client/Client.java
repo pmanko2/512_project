@@ -301,25 +301,31 @@ public class Client
             
         case 7: //delete Car
             if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+	            obj.wrongNumber();
+	            break;
             }
             System.out.println("Deleting the cars from a particular location  using id: "+arguments.elementAt(1));
             System.out.println("Car Location: "+arguments.elementAt(2));
             try{
-            	//TODO delete car
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
             
-            if(rm.deleteCars(Id,location))
-                System.out.println("Cars Deleted");
-            else
-                System.out.println("Cars could not be deleted");
+	            if(rm.deleteCars(Id,location))
+	            {
+	            	autoCommit("Cars Deleted.");
+	            }
+	            else
+	            {
+	                System.out.println("Cars could not be deleted");
+	                rm.abort(CURRENT_TRXN);
+	            }
             }
             catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
             

@@ -98,6 +98,13 @@ public class Operation {
 					//call rm to delete flight (not in a persistent way until committed
 					return rm.deleteFlight(OP_ID, (Integer)arguments.get("flightNum"));
 
+				case DELETE_CARS:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to delete car (not in a persisitent wayuntil committed)
+					return rm.deleteCars(OP_ID, (String)arguments.get("location"));
 				default:
 					
 					return false;
