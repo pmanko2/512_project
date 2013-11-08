@@ -648,11 +648,12 @@ public class MiddlewareImpl implements ResourceManager {
 		args.put("flightNum", flightNumber);
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, flights_rm, OP_CODE.RESERVE_FLIGHT, args);
+		return tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args);
 	}
 	
 	public boolean reserveFlightExecute(int id, int customer, int flightNumber)
 	{
+		Trace.info("Reserve flight execute is called");
         return reserveItem(id, customer, Flight.getKey(flightNumber), String.valueOf(flightNumber));
 	}
 

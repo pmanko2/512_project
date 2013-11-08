@@ -147,7 +147,12 @@ public class Operation {
 					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
 					lm.Lock(transaction_id, (String) arguments.get("flight_key"), TrxnObj.WRITE);
 
-					return ((MiddlewareImpl) rm).reserveFlightExecute(OP_ID, (Integer)arguments.get("cid"), (Integer)arguments.get("flightNum"));
+					boolean to_return = false;
+					if (rm instanceof MiddlewareImpl)
+					{
+						to_return = ((MiddlewareImpl) rm).reserveFlightExecute(OP_ID, (Integer)arguments.get("cid"), (Integer)arguments.get("flightNum"));
+					}
+					return to_return;
 			
 				default:
 					

@@ -150,7 +150,12 @@ public class ResourceManagerImpl implements ResourceManager
     protected boolean deleteItem(int id, String key)
     {
         Trace.info("RM::deleteItem(" + id + ", " + key + ") called" );
-        ReservableItem curObj = (ReservableItem) readData( id, key );
+        ReservableItem curObj;     
+        if ((curObj = (ReservableItem) readNonCommittedData( id ))==null)
+       	{
+        	curObj = (ReservableItem) readData( id, key);
+  		}
+        
         // Check if there is such an item in the storage
         if ( curObj == null ) {
             Trace.warn("RM::deleteItem(" + id + ", " + key + ") failed--item doesn't exist" );
@@ -235,7 +240,12 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public ReservableItem getReservableItem(int id, String key)
     {
-    	return (ReservableItem)readData(id, key);
+        ReservableItem reserved_item;
+        if ((reserved_item = (ReservableItem) readNonCommittedData( id ))==null)
+       	{
+        	reserved_item = (ReservableItem) readData( id, key);
+  		}
+    	return reserved_item;
     }
     
 	/**
@@ -243,8 +253,13 @@ public class ResourceManagerImpl implements ResourceManager
 	 */
 	public boolean itemReserved(int id, ReservableItem item) throws RemoteException {
 
-        ReservableItem item_to_update = (ReservableItem)readData(id, item.getKey());
         abort_items.put("" + id, item);
+
+        ReservableItem item_to_update;
+        if ((item_to_update = (ReservableItem) readNonCommittedData( id ))==null)
+       	{
+        	item_to_update = (ReservableItem) readData( id, item.getKey());
+  		}
 
         // decrease the number of available items in the storage
         item_to_update.setCount(item_to_update.getCount() - 1);
