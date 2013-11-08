@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import LockManager.LockManager;
+import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 /**
@@ -50,7 +51,7 @@ public class Transaction {
 	public boolean addOperation(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
-		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
+		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
 		operations.add(o);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
@@ -61,7 +62,7 @@ public class Transaction {
 	public int addOperationIntReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
-		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
+		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
 		operations.add(o);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
