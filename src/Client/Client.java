@@ -706,83 +706,115 @@ public class Client
             {
             	start();
             	
-            	//TODO reserve car
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
             	location = obj.getString(arguments.elementAt(3));
             
-            if(rm.reserveCar(Id,customer,location))
-            
-                System.out.println("Car Reserved");
-            else
-                System.out.println("Car could not be reserved.");
+	            if(rm.reserveCar(Id,customer,location))
+	            {
+	            	autoCommit("Car Reserved");
+	            }
+	            else
+	            {
+	            	System.out.println("Car could not be reseved");
+	            	rm.abort(CURRENT_TRXN);
+	            }
+
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 19:  //reserve a room
-            if(arguments.size()!=4){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=4)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Reserving a room at a location using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
             System.out.println("Location: "+arguments.elementAt(3));
-            try{
-            	//TODO reserve room
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN; 
             	int customer = obj.getInt(arguments.elementAt(2));
-            location = obj.getString(arguments.elementAt(3));
+            	location = obj.getString(arguments.elementAt(3));
             
-            if(rm.reserveRoom(Id,customer,location))
-                System.out.println("Room Reserved");
-            else
-                System.out.println("Room could not be reserved.");
+            	if(rm.reserveRoom(Id,customer,location))
+	            {
+	            	autoCommit("Room Reserved");
+	            }
+	            else
+	            {
+	            	System.out.println("Room could not be reseved");
+	            	rm.abort(CURRENT_TRXN);
+	            }
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 20:  //reserve an Itinerary
-            if(arguments.size()<7){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()<7)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Reserving an Itinerary using id:"+arguments.elementAt(1));
             System.out.println("Customer id:"+arguments.elementAt(2));
+            
             for(int i=0;i<arguments.size()-6;i++)
-            System.out.println("Flight number"+arguments.elementAt(3+i));
+            	System.out.println("Flight number"+arguments.elementAt(3+i));
+            
             System.out.println("Location for Car/Room booking:"+arguments.elementAt(arguments.size()-3));
             System.out.println("Car to book?:"+arguments.elementAt(arguments.size()-2));
             System.out.println("Room to book?:"+arguments.elementAt(arguments.size()-1));
+            
             try{
-            	//TODO reserve itinerary
+            	
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
-            @SuppressWarnings("rawtypes")
-			Vector flightNumbers = new Vector();
-            for(int i=0;i<arguments.size()-6;i++)
-                flightNumbers.addElement(arguments.elementAt(3+i));
-            location = obj.getString(arguments.elementAt(arguments.size()-3));
-            Car = obj.getBoolean(arguments.elementAt(arguments.size()-2));
-            Room = obj.getBoolean(arguments.elementAt(arguments.size()-1));
-            
-            if(rm.itinerary(Id,customer,flightNumbers,location,Car,Room))
-                System.out.println("Itinerary Reserved");
-            else
-                System.out.println("Itinerary could not be reserved.");
-            }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            	
+	            @SuppressWarnings("rawtypes")
+				Vector flightNumbers = new Vector();
+	            for(int i=0;i<arguments.size()-6;i++)
+	                flightNumbers.addElement(arguments.elementAt(3+i));
+	            
+	            location = obj.getString(arguments.elementAt(arguments.size()-3));
+	            Car = obj.getBoolean(arguments.elementAt(arguments.size()-2));
+	            Room = obj.getBoolean(arguments.elementAt(arguments.size()-1));
+	            
+	            if(rm.itinerary(Id,customer,flightNumbers,location,Car,Room))
+	            {
+	            	autoCommit("Itinerary Reserved");
+	            }
+	            else
+	            {
+	            	System.out.println("Itinerary could not be reserved");
+	            	rm.abort(CURRENT_TRXN);
+	            }
+
+	        }
+            catch(Exception e)
+            {
+	            System.out.println("EXCEPTION:");
+	            System.out.println(e.getMessage());
+	            e.printStackTrace();
             }
             break;
                         
