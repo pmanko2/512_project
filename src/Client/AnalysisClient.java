@@ -5,8 +5,11 @@ import ResInterface.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.RMISecurityManager;
+import java.rmi.RemoteException;
 import java.util.*;
 import java.io.*;
+
+import javax.transaction.InvalidTransactionException;
 
     
 public class AnalysisClient
@@ -14,6 +17,16 @@ public class AnalysisClient
     static String message = "blank";
     //this references a Middleware Object
     static ResourceManager rm = null;
+    
+  //arraylists of room, car, flight, customer ids
+    ArrayList<Integer> roomList = new ArrayList<Integer>();
+    ArrayList<Integer> carList = new ArrayList<Integer>();
+    ArrayList<Integer> flightList = new ArrayList<Integer>();
+    ArrayList<Integer> customerList = new ArrayList<Integer>();
+    
+    Random random = new Random();
+    
+    private static int CURRENT_TRXN;
 
     @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
 	public static void main(String args[])
@@ -105,7 +118,6 @@ public class AnalysisClient
     			}
     			
     		} catch (IOException e) {
-    			// TODO Auto-generated catch block
     			e.printStackTrace();
     		}
             
@@ -135,26 +147,272 @@ public class AnalysisClient
     
     private void environmentSetup()
     {
-    	//TODO setup initial customers, flights, etc
+    	for(int i = 0; i < 10; i++)
+    	{
+    		addCustomer(i);
+    	}
+    	
+    	for(int i = 0; i < 25; i++)
+    	{
+    		int flightNum = random.nextInt(100) + 1;
+    		int flightSeats = random.nextInt(100) + 1;
+    		int flightPrice = random.nextInt(1000) + 1;
+    		
+    		addFlight(i, flightNum, flightSeats, flightPrice);
+    	}
+    	
+		int numCars = 100;
+		int carPrice = 200;
+		int numRooms = 200;
+		int roomPrice = 100;
+		
+		addCar("Montreal",1,numCars,carPrice);
+		addCar("Toronto",2,numCars,carPrice);
+		addCar("New York",3,numCars,carPrice);
+		addCar("New Jersey",4,numCars,carPrice);
+		
+		addRoom("Montreal",1,numRooms,roomPrice);
+		addRoom("Toronto",2,numRooms,roomPrice);
+		addRoom("New York",3,numRooms,roomPrice);
+		addRoom("New Jersey",4,numRooms,roomPrice);
     }
     
-    private void reserveItinerary()
+    private void bookCarRoomQueryFlight()
     {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+
+			int custID = customerList.get(random.nextInt(customerList.size()));
+			
+			boolean reservedCar = rm.reserveCar(1, custID, chooseLocation());
+			boolean reservedRoom = rm.reserveRoom(1, custID, chooseLocation());
+			int flightPrice = rm.queryFlight(1, flightList.get(random.nextInt(flightList.size())));
+			
+			if(reservedCar && reservedRoom && (flightPrice != -1))
+			{
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
     
+    private void addQueryCars()
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			int carsToAdd = random.nextInt(10) + 1;
+			String location = chooseLocation();
+		
+			
+			int queryBefore = rm.queryCars(1, location);
+			boolean add = rm.addCars(1, location, carsToAdd, 100);
+			int queryAfter = rm.queryCars(1, location);
+			
+			if((queryBefore != -1) && add && (queryAfter != -1))
+			{
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void returnBills()
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			int numBills = random.nextInt(5) + 1;
+			String[] bills = new String[numBills];
+			boolean canCommit = true;
+			
+			for(int i = 0; i < numBills; i++)
+			{
+				bills[i] = rm.queryCustomerInfo(1, customerList.get(random.nextInt(customerList.size())));
+			}
+			
+			for(int i = 0; i < numBills; i++)
+			{
+				if(bills[i] == null)
+					canCommit = false;
+			}
+			
+			if(canCommit)
+			{
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    @SuppressWarnings("unchecked")
+	private void reserveItinerary()
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			String location = chooseLocation();
+			int custID = customerList.get(random.nextInt(customerList.size()));
+			int numFlights = random.nextInt(4) + 1;
+			boolean reserveRoom = (random.nextInt(2) == 0) ? true : false;
+			boolean reserveCar = (random.nextInt(2) == 0) ? true : false;
+			Vector flightNumbers = new Vector();
+			
+			for(int i = 0; i < numFlights; i++)
+			{
+				flightNumbers.addElement(flightList.get(random.nextInt(flightList.size())));
+			}
+			
+			
+			if(rm.itinerary(1, custID, flightNumbers, location, reserveCar, reserveRoom))
+			{
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
     }
     
     private void addCustomer(int id)
     {
+    	int cId;
     	
+		try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			cId = rm.newCustomer(id);
+			
+			if(cId != -1)
+			{
+				customerList.add(new Integer(cId));
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void addFlight(int id, int flightNumber, int flightSeats, int flightPrice)
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			if(rm.addFlight(id, flightNumber, flightSeats, flightPrice))
+			{
+				flightList.add(new Integer(flightNumber));
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void addCar(String location, int id, int numCars, int carPrice)
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			if(rm.addCars(id, location, numCars, carPrice))
+			{
+				carList.add(new Integer(id));
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void addRoom(String location, int id, int numRooms, int roomPrice)
+    {
+    	try 
+		{
+			CURRENT_TRXN = rm.start();
+			
+			if(rm.addCars(id, location, numRooms, roomPrice))
+			{
+				roomList.add(new Integer(id));
+				rm.commit(CURRENT_TRXN);
+			}
+			else
+			{
+				rm.abort(CURRENT_TRXN);
+			}
+			
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private String chooseLocation()
+    {
+    	int locationSelection = random.nextInt(4);
+		String location;
+		
+		switch(locationSelection)
+		{
+			case 0: 
+				location = "Montreal";
+				break;
+			case 1:
+				location = "Toronto";
+				break;
+			case 2: 
+				location = "New York";
+				break;
+			default:
+				location = "New Jersey";
+				break;
+		}
+		
+		return location;
     }
     
     private static void printTransactionOptions()
     {
     	
-    }
-
-    
-    private enum Type{
-    	CAR, FLIGHT, PLANE
     }
 }
