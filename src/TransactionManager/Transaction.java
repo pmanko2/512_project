@@ -47,7 +47,7 @@ public class Transaction {
 	 * Adds an operation to this transaction
 	 * @param o
 	 */
-	public boolean addOperation(ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	public boolean addOperation(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
 		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
@@ -58,7 +58,7 @@ public class Transaction {
 		return o.execute();
 	}
 	
-	public int addOperationIntReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args)
+	public int addOperationIntReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
 		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
@@ -67,6 +67,40 @@ public class Transaction {
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
 		return o.executeIntReturn();
+	}
+	
+	//this method creates an operation - replaces an operation if the key and the 
+	//OP_CODE are the same
+	public Operation createOperation(int id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	{
+		Operation return_value;
+		boolean create_new = true;
+		for (Operation o: operations)
+		{
+			boolean same_operation = true;
+			//if this is the same type of operation
+			//if (o.getOPCODE() == op)
+			//{
+				ArrayList<String> o_keys = o.getKeys();
+				//check if all the keys are the same
+				for (String k : keys)
+				{
+					if (!(o_keys.contains(k)))
+					{
+						same_operation = false;
+					}
+				}
+			//}
+			//if this is the same operation, create new operation with the same op_id
+			if(same_operation)
+			{
+				create_new = false;
+				return new Operation(TRANSACTION_ID, r, op, args, lm, o.getOpID());
+			}
+		}
+		//if this has been reached then this is a new unique operation, and we should
+		//create a new one
+		return new Operation(TRANSACTION_ID, r, op, args, lm);
 	}
 	
 	/**

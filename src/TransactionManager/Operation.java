@@ -33,6 +33,7 @@ public class Operation {
 	private int transaction_id;
 	private static int operation_count = 0;
 	private final int OP_ID;
+	private ArrayList<String> keys;
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l)
 	{
@@ -43,6 +44,18 @@ public class Operation {
 		lm = l;
 		OP_ID = operation_count;
 		operation_count++;
+		keys = new ArrayList<String>();
+	}
+	
+	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l, int specified_id)
+	{
+		transaction_id = id;
+		rm = r;
+		operation = op;
+		arguments = args;
+		lm = l;
+		OP_ID = specified_id;
+		keys = new ArrayList<String>();
 	}
 	
 	/**
@@ -63,6 +76,7 @@ public class Operation {
 				
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					keys.add((String)arguments.get("key"));
 					
 					//call rm to create a non-committed RMItem
 					return rm.addFlight(OP_ID, (Integer)arguments.get("flightNum"), (Integer)arguments.get("flightSeats"), (Integer)arguments.get("flightPrice"));
@@ -71,7 +85,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to create a non-committed RMItem
 					return rm.addCars(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numCars"), (Integer)arguments.get("price"));
 						
@@ -79,7 +94,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to create a non-committed RMItem
 					return rm.addRooms(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numRooms"), (Integer)arguments.get("price"));
 				
@@ -87,7 +103,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to create a non-committed RMItem
 					if ((rm.newCustomerExecute(OP_ID, (Integer)arguments.get("cid")))!=-1)
 					{
@@ -102,7 +119,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to delete flight (not in a persistent way until committed
 					return rm.deleteFlight(OP_ID, (Integer)arguments.get("flightNum"));
 
@@ -110,7 +128,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to delete car (not in a persisitent wayuntil committed)
 					return rm.deleteCars(OP_ID, (String)arguments.get("location"));
 					
@@ -118,7 +137,8 @@ public class Operation {
 					
 					//acquire write lock
 					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					//call rm to delete car (not in a persisitent wayuntil committed)
 					return rm.deleteRooms(OP_ID, (String)arguments.get("location"));
 					
@@ -126,7 +146,8 @@ public class Operation {
 					
 					//acquire write lock for customer, as well as for all the reservations they have
 					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.WRITE);
-					
+					keys.add((String)arguments.get("key"));
+
 					Customer cust = (Customer) arguments.get("customer_object");
 					RMHashtable reserved_items = cust.getReservations();
 
@@ -146,6 +167,9 @@ public class Operation {
 					//acquire write lock for customer, as well as the flight
 					lm.Lock(transaction_id, (String) arguments.get("customer_key"), TrxnObj.WRITE);
 					lm.Lock(transaction_id, (String) arguments.get("flight_key"), TrxnObj.WRITE);
+					keys.add((String)arguments.get("customer_key"));
+					keys.add((String)arguments.get("flight_key"));
+
 
 					boolean to_return = false;
 					if (rm instanceof MiddlewareImpl)
@@ -273,5 +297,32 @@ public class Operation {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Get OP_CODE for this operation
+	 * @return
+	 */
+	public OP_CODE getOPCODE()
+	{
+		return operation;
+	}
+	
+	/**
+	 * get key on which this operation depends
+	 * @return
+	 */
+	public ArrayList<String> getKeys()
+	{
+		return keys;
+	}
+	
+	/**
+	 * Get this operation's OP_ID
+	 * @return
+	 */
+	public int getOpID()
+	{
+		return OP_ID;
 	}
 }
