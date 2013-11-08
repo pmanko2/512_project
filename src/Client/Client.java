@@ -276,8 +276,7 @@ public class Client
             
             try{
             	start();
-            	
-            	//TODO delete flight
+
             	Id = CURRENT_TRXN;
             	flightNum = obj.getInt(arguments.elementAt(2));
             	
@@ -343,127 +342,204 @@ public class Client
             {
 
             	start();
+            	
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
            
             	if(rm.deleteRooms(Id,location))
-            		System.out.println("Rooms Deleted");
-            
+            	{
+            		autoCommit("Rooms Deleted");
+            	}
             	else
+            	{
             		System.out.println("Rooms could not be deleted");
+            		rm.abort(CURRENT_TRXN);
+            	}
             }
             
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 9: //delete Customer
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Deleting a customer from the database using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
-            try{
-            	//TODO delete customer
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
-            if(rm.deleteCustomer(Id,customer))
-                System.out.println("Customer Deleted");
-            else
-                System.out.println("Customer could not be deleted");
+            	
+            	if(rm.deleteCustomer(Id,customer))
+            	{
+            		autoCommit("Customer Deleted");
+            	}
+            	else
+            	{
+            		System.out.println("Customer could not be deleted");
+            		rm.abort(CURRENT_TRXN);
+            	}
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 10: //querying a flight
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a flight using id: "+arguments.elementAt(1));
             System.out.println("Flight number: "+arguments.elementAt(2));
-            try{
-            	//TODO query flight
+            
+            try
+            {
+            	start();
+
             	Id = CURRENT_TRXN;
             	flightNum = obj.getInt(arguments.elementAt(2));
-            int seats=rm.queryFlight(Id,flightNum);
-            System.out.println("Number of seats available:"+seats);
+            	int seats = rm.queryFlight(Id,flightNum);
+            	
+            	if(seats != -1)
+            	{
+            		autoCommit("Number of seats available: " + seats);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query flight");
+            		rm.abort(CURRENT_TRXN);
+            	}
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 11: //querying a Car Location
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a car location using id: "+arguments.elementAt(1));
             System.out.println("Car location: "+arguments.elementAt(2));
+            
             try{
-            	//TODO query car
+            	start();
+
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
-            numCars=rm.queryCars(Id,location);
-            System.out.println("number of Cars at this location:"+numCars);
+            	
+            	numCars=rm.queryCars(Id,location);
+            	
+            	if(numCars != -1)
+            	{
+            		autoCommit("Number of cars at this location: " + numCars);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query cars at this location");
+            	}
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 12: //querying a Room location
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a room location using id: "+arguments.elementAt(1));
             System.out.println("Room location: "+arguments.elementAt(2));
-            try{
-            	//TODO query room 
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
-            numRooms=rm.queryRooms(Id,location);
-            System.out.println("number of Rooms at this location:"+numRooms);
+            	numRooms=rm.queryRooms(Id,location);
+            	
+            	if(numRooms != -1)
+            	{
+            		autoCommit("Number of Rooms at this location: " + numRooms);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query rooms at this lcoation");
+            		rm.abort(CURRENT_TRXN);
+            	}
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 13: //querying Customer Information
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying Customer information using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
+            
             try{
-            	//TODO query customer info
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
-            String bill=rm.queryCustomerInfo(Id,customer);
-            System.out.println("Customer info:"+bill);
+            	String bill=rm.queryCustomerInfo(Id,customer);
+            	
+            	if(bill != null)
+            	{
+            		autoCommit("Customer Info" + bill);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query customer's bill");
+            		rm.abort(CURRENT_TRXN);
+            	}
+            	
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;               
             
