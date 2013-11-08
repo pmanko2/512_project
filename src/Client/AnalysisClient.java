@@ -19,8 +19,8 @@ public class AnalysisClient
     static ResourceManager rm = null;
     
   //arraylists of room, car, flight, customer ids
-    ArrayList<Integer> roomList = new ArrayList<Integer>();
-    ArrayList<Integer> carList = new ArrayList<Integer>();
+    static ArrayList<Integer> roomList = new ArrayList<Integer>();
+    static ArrayList<Integer> carList = new ArrayList<Integer>();
     static ArrayList<Integer> flightList = new ArrayList<Integer>();
     static ArrayList<Integer> customerList = new ArrayList<Integer>();
     
@@ -48,11 +48,14 @@ public class AnalysisClient
         String location;
         String numIterationsString = "0";
         int numTransactions = 0;
+        int transSelection = 0;
         int testingSelection = -1;
         boolean automateTesting = false;
         boolean setupClient = false;
-        final int TRXNS_PER_SECOND = 2;
+        int TRXNS_PER_SECOND = 2;
         reactionTime = 0;
+        long averageReactionTime = 0;
+        int loadNum = 0;
         
 
 
@@ -103,17 +106,15 @@ public class AnalysisClient
         }
         
         
-        
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
-        }
+        if(setupClient)
+        	environmentSetup();
         
         boolean correctOption = false;
         
         boolean correctInput = false;
         while(!correctInput)
         {
-        	System.out.println("Please choose an option:\n\n1. Choose transaction to test \n 2. Automate Testing");
+        	System.out.println("Please choose an option:\n\n1. Choose transaction to test \n2. Automate Testing");
             try {
     			String selection = stdin.readLine();
     			testingSelection = Integer.parseInt(selection);
@@ -121,31 +122,52 @@ public class AnalysisClient
     			if(!(testingSelection == 1 || testingSelection == 2))
     			{
     				System.out.println("Incorrect selection, Please try again");
-    				break;
+    				continue;
     			}
     			else
     			{
     				correctInput = true;
     			}
     			
-    		} catch (IOException e) {
+    			if(testingSelection == 1)
+                {
+                	printTransactionOptions();
+                	String transTypeSelection = stdin.readLine();
+                	transSelection = Integer.parseInt(transTypeSelection);
+                }
+                else
+                {
+                	automateTesting = true;
+                }
+    			
+    		} catch (IOException e) 
+    		{
     			e.printStackTrace();
+    		} catch(NumberFormatException nutNumber)
+    		{
+    			System.out.println("Incorrect input, please try again");
+     			correctInput = false;
+     			continue;
     		}
-            
-            if(testingSelection == 1)
-            {
-            	printTransactionOptions();
-            }
-            else
-            {
-            	automateTesting = true;
-            }
             
         	
         	 System.out.println("How many transactions would you like the client to submit?\n>");
              try {
      			numIterationsString = stdin.readLine();
      			numTransactions = Integer.parseInt(numIterationsString);
+     			correctInput = true;
+     		} catch (IOException e1) {
+     			e1.printStackTrace();
+     		} catch(NumberFormatException notNumber){
+     			System.out.println("Incorrect input, please try again");
+     			correctInput = false;
+     			continue;
+     		}
+             
+             System.out.println("Load of System?\n>");
+             try {
+     			String loadString = stdin.readLine();
+     			TRXNS_PER_SECOND = Integer.parseInt(loadString);
      			correctInput = true;
      		} catch (IOException e1) {
      			e1.printStackTrace();
@@ -198,10 +220,10 @@ public class AnalysisClient
         		}
         	}
         	
-        	//TODO interval stuff
         	
         	long transactionEnd = System.currentTimeMillis();
         	reactionTime = transactionEnd - transactionStart;
+        	averageReactionTime = averageReactionTime + reactionTime;
         	System.out.println("Response Time: " + reactionTime);
         	
         	int millisForTransaction = 1000 / TRXNS_PER_SECOND;
@@ -216,11 +238,13 @@ public class AnalysisClient
         	{
         		Thread.sleep(random.nextInt(upperTrxnBound - lowerTrxnBound) + lowerTrxnBound);
         	}
-        		
         }
+        
+        System.out.println("Total reaction time: " + averageReactionTime);
+        System.out.println("Average reaction time: " + (averageReactionTime / numTransactions));
     }
     
-    private void environmentSetup()
+    private static void environmentSetup()
     {
     	for(int i = 0; i < 10; i++)
     	{
@@ -232,6 +256,8 @@ public class AnalysisClient
     		int flightNum = random.nextInt(100) + 1;
     		int flightSeats = random.nextInt(100) + 1;
     		int flightPrice = random.nextInt(1000) + 1;
+    		
+    		System.out.println("Flight Num: " + flightNum + "Flight seats: " + flightSeats + "flightPrice: " + flightPrice);
     		
     		addFlight(i, flightNum, flightSeats, flightPrice);
     	}
@@ -260,9 +286,9 @@ public class AnalysisClient
 
 			int custID = customerList.get(random.nextInt(customerList.size()));
 			
-			boolean reservedCar = rm.reserveCar(1, custID, chooseLocation());
-			boolean reservedRoom = rm.reserveRoom(1, custID, chooseLocation());
-			int flightPrice = rm.queryFlight(1, flightList.get(random.nextInt(flightList.size())));
+			boolean reservedCar = rm.reserveCar(CURRENT_TRXN, custID, chooseLocation());
+			boolean reservedRoom = rm.reserveRoom(CURRENT_TRXN, custID, chooseLocation());
+			int flightPrice = rm.queryFlight(CURRENT_TRXN, flightList.get(random.nextInt(flightList.size())));
 			
 			if(reservedCar && reservedRoom && (flightPrice != -1))
 			{
@@ -288,9 +314,9 @@ public class AnalysisClient
 			String location = chooseLocation();
 		
 			
-			int queryBefore = rm.queryCars(1, location);
-			boolean add = rm.addCars(1, location, carsToAdd, 100);
-			int queryAfter = rm.queryCars(1, location);
+			int queryBefore = rm.queryCars(CURRENT_TRXN, location);
+			boolean add = rm.addCars(CURRENT_TRXN, location, carsToAdd, 100);
+			int queryAfter = rm.queryCars(CURRENT_TRXN, location);
 			
 			if((queryBefore != -1) && add && (queryAfter != -1))
 			{
@@ -318,7 +344,7 @@ public class AnalysisClient
 			
 			for(int i = 0; i < numBills; i++)
 			{
-				bills[i] = rm.queryCustomerInfo(1, customerList.get(random.nextInt(customerList.size())));
+				bills[i] = rm.queryCustomerInfo(CURRENT_TRXN, customerList.get(random.nextInt(customerList.size())));
 			}
 			
 			for(int i = 0; i < numBills; i++)
@@ -356,11 +382,11 @@ public class AnalysisClient
 			
 			for(int i = 0; i < numFlights; i++)
 			{
-				flightNumbers.addElement(flightList.get(random.nextInt(flightList.size())));
+				flightNumbers.addElement(String.valueOf(flightList.get(random.nextInt(flightList.size()))));
 			}
 			
 			
-			if(rm.itinerary(1, custID, flightNumbers, location, reserveCar, reserveRoom))
+			if(rm.itinerary(CURRENT_TRXN, custID, flightNumbers, location, reserveCar, reserveRoom))
 			{
 				rm.commit(CURRENT_TRXN);
 			}
@@ -374,7 +400,7 @@ public class AnalysisClient
 		}
     }
     
-    private void addCustomer(int id)
+    private static void addCustomer(int id)
     {
     	int cId;
     	
@@ -382,7 +408,11 @@ public class AnalysisClient
 		{
 			CURRENT_TRXN = rm.start();
 			
-			cId = rm.newCustomer(id);
+			System.out.println(CURRENT_TRXN);
+			
+			cId = rm.newCustomer(CURRENT_TRXN);
+			
+			System.out.println("Cid: " + cId);
 			
 			if(cId != -1)
 			{
@@ -399,13 +429,13 @@ public class AnalysisClient
 		}
     }
     
-    private void addFlight(int id, int flightNumber, int flightSeats, int flightPrice)
+    private static void addFlight(int id, int flightNumber, int flightSeats, int flightPrice)
     {
     	try 
 		{
 			CURRENT_TRXN = rm.start();
 			
-			if(rm.addFlight(id, flightNumber, flightSeats, flightPrice))
+			if(rm.addFlight(CURRENT_TRXN, flightNumber, flightSeats, flightPrice))
 			{
 				flightList.add(new Integer(flightNumber));
 				rm.commit(CURRENT_TRXN);
@@ -420,13 +450,13 @@ public class AnalysisClient
 		}
     }
     
-    private void addCar(String location, int id, int numCars, int carPrice)
+    private static void addCar(String location, int id, int numCars, int carPrice)
     {
     	try 
 		{
 			CURRENT_TRXN = rm.start();
 			
-			if(rm.addCars(id, location, numCars, carPrice))
+			if(rm.addCars(CURRENT_TRXN, location, numCars, carPrice))
 			{
 				carList.add(new Integer(id));
 				rm.commit(CURRENT_TRXN);
@@ -441,13 +471,13 @@ public class AnalysisClient
 		}
     }
     
-    private void addRoom(String location, int id, int numRooms, int roomPrice)
+    private static void addRoom(String location, int id, int numRooms, int roomPrice)
     {
     	try 
 		{
 			CURRENT_TRXN = rm.start();
 			
-			if(rm.addCars(id, location, numRooms, roomPrice))
+			if(rm.addCars(CURRENT_TRXN, location, numRooms, roomPrice))
 			{
 				roomList.add(new Integer(id));
 				rm.commit(CURRENT_TRXN);
