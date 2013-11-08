@@ -184,6 +184,30 @@ public class Operation {
 					
 					//call rm to create a non-committed RMItem
 					return rm.newCustomerExecute(OP_ID, (Integer)arguments.get("cid"));
+					
+				case QUERY_FLIGHTS:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryFlight(OP_ID, (Integer)arguments.get("flightNum"));
+					
+				case QUERY_CARS:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryCars(OP_ID, (String) arguments.get("location"));
+					
+				case QUERY_ROOMS:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryRooms(OP_ID, (String) arguments.get("location"));
+					
+				case QUERY_FLIGHT_PRICE:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryFlightPrice(OP_ID, (Integer)arguments.get("flightNum"));
+					
+				case QUERY_CAR_PRICE:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryCarsPrice(OP_ID, (String) arguments.get("location"));
+					
+				case QUERY_ROOM_PRICE:
+					lm.Lock(transaction_id, (String) arguments.get("key"), TrxnObj.READ);
+					return rm.queryRoomsPrice(OP_ID, (String) arguments.get("location"));
 
 				default:
 					
