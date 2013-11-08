@@ -63,7 +63,7 @@ public class Transaction {
 		//cancel current timer and create new timer with new time limit
 		timer.cancel();
 		timer = new Timer();
-		timer.schedule(new AbortTask(this), 5000);
+		timer.schedule(new AbortTask(this), 5*60*1000);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
@@ -151,8 +151,10 @@ public class Transaction {
 			this.trxnToAbort = txn;
 		}
 		
+		@Override
 		public void run()
 		{
+			System.out.println("Aborting");
 			trxnToAbort.abort();
 		}
 	}
