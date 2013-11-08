@@ -544,109 +544,175 @@ public class Client
             break;               
             
         case 14: //querying a flight Price
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a flight Price using id: "+arguments.elementAt(1));
             System.out.println("Flight number: "+arguments.elementAt(2));
-            try{
-            	//TODO query flight
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	flightNum = obj.getInt(arguments.elementAt(2));
-            price=rm.queryFlightPrice(Id,flightNum);
-            System.out.println("Price of a seat:"+price);
+            	price=rm.queryFlightPrice(Id,flightNum);
+            	
+            	if(price != -1)
+            	{
+            		autoCommit("Price of a seat: " + price);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query flight price");
+            		rm.abort(CURRENT_TRXN);
+            	}
+            	
+            	System.out.println("Price of a seat:"+price);
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 15: //querying a Car Price
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a car price using id: "+arguments.elementAt(1));
             System.out.println("Car location: "+arguments.elementAt(2));
+            
             try{
-            	//TODO query car
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
-            price=rm.queryCarsPrice(Id,location);
-            System.out.println("Price of a car at this location:"+price);
+            	price=rm.queryCarsPrice(Id,location);
+            	
+            	if(price != -1)
+            	{
+            		autoCommit("Price of a car at this location: " + price);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query car price at this location");
+            		rm.abort(CURRENT_TRXN);
+            	}
+            	
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }                
             break;
 
         case 16: //querying a Room price
-            if(arguments.size()!=3){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=3)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Querying a room price using id: "+arguments.elementAt(1));
             System.out.println("Room Location: "+arguments.elementAt(2));
-            try{
-            	//TODO query room
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	location = obj.getString(arguments.elementAt(2));
-            price=rm.queryRoomsPrice(Id,location);
-            System.out.println("Price of Rooms at this location:"+price);
+            	price=rm.queryRoomsPrice(Id,location);
+            	
+            	if(price != -1)
+            	{
+            		autoCommit("Price of a room at this location: " + price);
+            	}
+            	else
+            	{
+            		System.out.println("Could not query room price at this location");
+            		rm.abort(CURRENT_TRXN);
+            	}
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 17:  //reserve a flight
-            if(arguments.size()!=4){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=4)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Reserving a seat on a flight using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
             System.out.println("Flight number: "+arguments.elementAt(3));
-            try{
-            	//TODO reserve flight
+            
+            try
+            {
+            	start();
+            	
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
-            flightNum = obj.getInt(arguments.elementAt(3));
-            if(rm.reserveFlight(Id,customer,flightNum))
-                System.out.println("Flight Reserved");
-            else
-                System.out.println("Flight could not be reserved.");
+            	flightNum = obj.getInt(arguments.elementAt(3));
+            	
+	            if(rm.reserveFlight(Id,customer,flightNum))
+	            {
+	            	autoCommit("Flight Reserved");
+	            }
+	            else
+	            {
+	            	System.out.println("Flight could not be reserved.");
+	            	rm.abort(CURRENT_TRXN);
+	            }
+
             }
-            catch(Exception e){
-            System.out.println("EXCEPTION:");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            catch(Exception e)
+            {
+            	System.out.println("EXCEPTION:");
+            	System.out.println(e.getMessage());
+            	e.printStackTrace();
             }
             break;
             
         case 18:  //reserve a car
-            if(arguments.size()!=4){
-            obj.wrongNumber();
-            break;
+            if(arguments.size()!=4)
+            {
+            	obj.wrongNumber();
+            	break;
             }
+            
             System.out.println("Reserving a car at a location using id: "+arguments.elementAt(1));
             System.out.println("Customer id: "+arguments.elementAt(2));
             System.out.println("Location: "+arguments.elementAt(3));
             
-            try{
+            try
+            {
+            	start();
+            	
             	//TODO reserve car
             	Id = CURRENT_TRXN;
             	int customer = obj.getInt(arguments.elementAt(2));
-            location = obj.getString(arguments.elementAt(3));
+            	location = obj.getString(arguments.elementAt(3));
             
             if(rm.reserveCar(Id,customer,location))
+            
                 System.out.println("Car Reserved");
             else
                 System.out.println("Car could not be reserved.");
