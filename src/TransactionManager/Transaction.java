@@ -2,6 +2,8 @@ package TransactionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import LockManager.LockManager;
 import ResInterface.ResourceManager;
@@ -17,12 +19,16 @@ public class Transaction {
 	//array list of operations this transaction is responsible for
 	private ArrayList<Operation> operations;
 	private LockManager lm;
+	private Timer timer;
 	
 	public Transaction(int id, LockManager l)
 	{
 		TRANSACTION_ID = id;
 		operations = new ArrayList<Operation>();
 		lm = l;
+		// create new timer and set it to go off in 5 minutes
+		timer = new Timer();
+		timer.schedule(new AbortTask(this), 5*60*1000);
 	}
 	
 	/**
@@ -52,6 +58,11 @@ public class Transaction {
 		//create operation and add to operation queue
 		Operation o = new Operation(TRANSACTION_ID, r, op, args, lm);
 		operations.add(o);
+		
+		//cancel current timer and create new timer with new time limit
+		timer.cancel();
+		timer = new Timer();
+		timer.schedule(new AbortTask(this), 5000);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
@@ -94,5 +105,20 @@ public class Transaction {
 			o.abort();
 		}
 		lm.UnlockAll(TRANSACTION_ID);
+	}
+	
+	class AbortTask extends TimerTask
+	{
+		private Transaction trxnToAbort;
+		
+		public AbortTask(Transaction txn)
+		{
+			this.trxnToAbort = txn;
+		}
+		
+		public void run()
+		{
+			trxnToAbort.abort();
+		}
 	}
 }
