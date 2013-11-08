@@ -11,6 +11,7 @@ import LockManager.LockManager;
 import LockManager.TrxnObj;
 import ResImpl.Car;
 import ResImpl.Flight;
+import ResImpl.Hotel;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -59,7 +60,15 @@ public class Operation {
 					
 					//call rm to create a non-committed RMItem
 					return rm.addCars(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numCars"), (Integer)arguments.get("price"));
-										
+						
+				case ADD_ROOMS:
+					
+					//acquire write lock
+					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
+					
+					//call rm to create a non-committed RMItem
+					return rm.addRooms(OP_ID, (String)arguments.get("location"), (Integer)arguments.get("numRooms"), (Integer)arguments.get("price"));
+					
 				default:
 					
 					return false;

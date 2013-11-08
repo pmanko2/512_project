@@ -340,7 +340,14 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addRooms(int id, String location, int numRooms, int price)
 			throws RemoteException {
 
-		return rooms_rm.addRooms(id, location, numRooms, price);
+		HashMap<String, Object> args = new HashMap<String, Object>();
+		args.put("key", Hotel.getKey(location));
+		args.put("location", location);
+		args.put("numRooms", numRooms);
+		args.put("price", price);
+		
+		//returns true if transaction was able to acquire all locks necessary for this operation
+		return tm.addOperation(id, rooms_rm, OP_CODE.ADD_ROOMS, args);
 	}
 
 	// customer functions
@@ -349,6 +356,7 @@ public class MiddlewareImpl implements ResourceManager {
     public int newCustomer(int id)
         throws RemoteException
     {
+    	//TODO add return -1 if locks fail
         Trace.info("INFO: RM::newCustomer(" + id + ") called" );
         // Generate a globally unique ID for the new customer
         int cid = Integer.parseInt( String.valueOf(id) +
@@ -364,6 +372,7 @@ public class MiddlewareImpl implements ResourceManager {
     public boolean newCustomer(int id, int customerID )
         throws RemoteException
     {
+    	//TODO add return -1 if locks fail
         Trace.info("INFO: RM::newCustomer(" + id + ", " + customerID + ") called" );
         Customer cust = (Customer) readData( id, Customer.getKey(customerID) );
         if ( cust == null ) {
