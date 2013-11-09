@@ -164,9 +164,34 @@ public class LockManager
                                     }        
                                 }
                                 else {
+                                	//if only one transaction has a lock on the 
+                                	//data item just unlocked then check if it's 
+                                	//us
+                                	if (vect1.size() == 1)
+                                	{
+                                		//get the one transaction that is waiting
+                                		DataObj waitingOn = (DataObj) vect1.get(0);
+                                		
+                                		//check if this transaction is US. If it is, we should
+                                		//acquire the lock
+                                		if (waitingOn.getXId() == waitObj.getXId())
+                                		{
+                                            this.waitTable.remove(waitObj);     
+                                            
+                                            try {
+                                                synchronized (waitObj.getThread())    {
+                                                    waitObj.getThread().notify();
+                                                }    
+                                            }
+                                            catch (Exception e)    {
+                                                System.out.println("Exception on unlock\n" + e.getMessage());
+                                            } 
+                                		}
+                                	}
                                     // some other transaction still has a lock on
                                     // the data item just unlocked. So, WRITE lock
                                     // cannot be granted.
+                        
                                     break;
                                 }
                             }
