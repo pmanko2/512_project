@@ -7,6 +7,7 @@ package ResImpl;
 import java.io.*;
 
 // A simple Integer wrapper
+@SuppressWarnings("serial")
 public class RMInteger extends RMItem implements Serializable
 {
 		protected int m_value;

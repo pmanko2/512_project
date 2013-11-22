@@ -4,6 +4,7 @@ package LockManager;
 	The transaction requested a lock that it already had.
 */
 
+@SuppressWarnings("serial")
 public class RedundantLockRequestException extends Exception
 {
 	protected int xid = 0;

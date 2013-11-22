@@ -148,7 +148,8 @@ public interface ResourceManager extends Remote
 
 
     /* reserve an itinerary */
-    public boolean itinerary(int id,int customer,Vector flightNumbers,String location, boolean Car, boolean Room)
+    @SuppressWarnings("rawtypes")
+	public boolean itinerary(int id,int customer,Vector flightNumbers,String location, boolean Car, boolean Room)
 	throws RemoteException; 
     
     /**
@@ -171,5 +172,11 @@ public interface ResourceManager extends Remote
 	 * @throws RemoteException
 	 */
 	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) 
+	throws RemoteException;
+	
+	/**
+	 * Method used to give RM its name (so it knows which RM it is)
+	 */
+	public void giveName(String name) 
 	throws RemoteException;
 }

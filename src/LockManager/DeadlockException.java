@@ -4,6 +4,7 @@ package LockManager;
     The transaction is deadlocked.  Somebody should abort it.
 */
 
+@SuppressWarnings("serial")
 public class DeadlockException extends Exception
 {
     private int xid = 0;

@@ -4,12 +4,10 @@ import ResInterface.*;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.io.*;
 
-import javax.transaction.InvalidTransactionException;
 
     
 public class AnalysisClient
@@ -29,7 +27,7 @@ public class AnalysisClient
     private static int CURRENT_TRXN;
     private static long reactionTime;
 
-    @SuppressWarnings({ "rawtypes", "unchecked", "unused", "fallthrough"})
+    @SuppressWarnings({ "rawtypes", "unused", "fallthrough"})
 	public static void main(String args[]) throws InterruptedException
     {
         Client obj = new Client();
@@ -367,7 +365,7 @@ public class AnalysisClient
 		}
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
 	private static void reserveItinerary()
     {
     	try 
