@@ -900,7 +900,15 @@ public class Client
 				System.out.println("The last transaction has already been terminated.");
 			}
         	break;
-            
+        case 26:
+        	try {
+        		rm.shutdown();
+        	} catch (InvalidTransactionException e) {
+				e.printStackTrace();
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+            break;
         default:
             System.out.println("The interface does not support this command.");
             break;
@@ -1016,6 +1024,8 @@ public class Client
     	return 24;
     else if (argument.compareToIgnoreCase("abort")==0)
     	return 25;
+    else if (argument.compareToIgnoreCase("shutdown")==0)
+    	return 26;
     else
         return 666;
 
@@ -1031,7 +1041,7 @@ public class Client
     System.out.println("deletecustomer\nqueryflight\nquerycar\nqueryroom\nquerycustomer");
     System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
     System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");
-    System.out.println("nquit");
+    System.out.println("nquit\nshutdown");
     System.out.println("\ntype help, <commandname> for detailed info(NOTE the use of comma).");
     }
 
@@ -1234,6 +1244,9 @@ public class Client
         	System.out.println("\nUsage:\n\tabort");
         	break;
 
+        case 26:
+        	System.out.println("Shuts down servers - currently not implemented, will"
+        			+ " be added in next deliverable.");
         default:
         System.out.println(command);
         System.out.println("The interface does not support this command.");

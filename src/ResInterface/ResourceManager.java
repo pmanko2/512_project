@@ -61,6 +61,8 @@ public interface ResourceManager extends Remote
     public boolean addRooms(int id, String location, int numRooms, int price) 
 	throws RemoteException; 			    
 
+    public void shutdown()
+    throws RemoteException;
 			    
     /* new customer just returns a unique customer identifier */
     public int newCustomer(int id) 

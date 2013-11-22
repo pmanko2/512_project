@@ -393,7 +393,7 @@ public class MiddlewareImpl implements ResourceManager {
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		boolean to_return = tm.addOperation(id, cars_rm, OP_CODE.ADD_CARS, args, keys);
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("ADD CAR TIME: " + (end-start));
 		return to_return;
 	}
 
@@ -606,7 +606,7 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		int to_return = tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args, keys);
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("QUERY FLIGHT TIME: " + (end-start));
 		return to_return;
 	}
 
@@ -624,7 +624,7 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		int to_return = tm.addOperationIntReturn(id, cars_rm, OP_CODE.QUERY_CARS, args, keys);
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("QUERY CAR TIME: " + (end-start));
 		return to_return;
 	}
 
@@ -655,7 +655,7 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		String to_return = tm.addOperationStringReturn(id, this, OP_CODE.QUERY_CUSTOMER_INFO, args, keys);
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("QUERY CUSTOMER TIME: " + (end-start));
 		return to_return;
     }
     
@@ -763,7 +763,7 @@ public class MiddlewareImpl implements ResourceManager {
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		boolean to_return = tm.addOperation(id, this, OP_CODE.RESERVE_CAR, args, keys);	
 		long end = System.currentTimeMillis();
-		Trace.info(""+(end-start));
+		Trace.info("RESERVE CAR TIME: "+(end-start));
 		return to_return;
 	}
 	
@@ -793,7 +793,7 @@ public class MiddlewareImpl implements ResourceManager {
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		boolean to_return = tm.addOperation(id, this, OP_CODE.RESERVE_ROOM, args, keys);	
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("RESERVE ROOM TIME: " + (end-start));
 		return to_return;
 	}
 	
@@ -833,7 +833,7 @@ public class MiddlewareImpl implements ResourceManager {
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		boolean to_return = tm.addOperation(id, this, OP_CODE.ITINERARY, args, keys);	
 		long end = System.currentTimeMillis();
-		Trace.info("" + (end-start));
+		Trace.info("RESERVE ITINERARY TIME: " + (end-start));
 		return to_return;
 	}
 	
@@ -902,6 +902,13 @@ public class MiddlewareImpl implements ResourceManager {
 	public void itemUnReserved(int id, int customerID, String key,
 			ReservedItem reserveditem) throws RemoteException {
 		
+	}
+	
+	public void shutdown() throws RemoteException
+	{
+		cars_rm.shutdown();
+		flights_rm.shutdown();
+		rooms_rm.shutdown();
 	}
 
 

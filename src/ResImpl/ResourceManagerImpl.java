@@ -105,7 +105,6 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public void abort(int op_id)
     {
-    	Trace.info("THIS WAS CALLED");
     	//put back any old data (used for cases where the state of an object is changed
     	//instead of having been simply newly created
     	ReservableItem item = (ReservableItem) abort_items.get("" + op_id);
@@ -655,4 +654,11 @@ public class ResourceManagerImpl implements ResourceManager
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+	public void shutdown()
+	{
+		
+	}
 }
+
+
