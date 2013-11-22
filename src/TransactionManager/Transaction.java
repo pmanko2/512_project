@@ -27,10 +27,10 @@ public class Transaction {
 		TRANSACTION_ID = id;
 		operations = new ArrayList<Operation>();
 		lm = l;
-		// create new timer and set it to go off in 5 minutes
-		//timer = new Timer();
-		//abortTransaction = new AbortTask(this);
-		//timer.schedule(abortTransaction, 5*60*1000);
+		// create new timer and set it to go off in 2 minutes
+		timer = new Timer();
+		abortTransaction = new AbortTask(this);
+		timer.schedule(abortTransaction, 2*60*1000);
 	}
 	
 	/**
@@ -54,9 +54,9 @@ public class Transaction {
 		
 		//cancel current timer and create new timer with new time limit
 	
-	/*	abortTransaction.cancel();
+		abortTransaction.cancel();
 		abortTransaction = new AbortTask(this);
-		timer.schedule(abortTransaction, 5*60*1000);*/
+		timer.schedule(abortTransaction, 2*60*1000);
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
@@ -144,7 +144,7 @@ public class Transaction {
 			o.commit();
 		}
 		lm.UnlockAll(TRANSACTION_ID);
-//		timer.cancel();
+		timer.cancel();
 		
 		return true;
 	}
@@ -159,7 +159,7 @@ public class Transaction {
 			o.abort();
 		}
 		lm.UnlockAll(TRANSACTION_ID);
-//		timer.cancel();
+		timer.cancel();
 	}
 	
 	class AbortTask extends TimerTask
@@ -175,7 +175,6 @@ public class Transaction {
 		public void run()
 		{
 			System.out.println("Aborting");
-			trxnToAbort.abort();
 		}
 	}
 }
