@@ -135,6 +135,7 @@ public class MiddlewareImpl implements ResourceManager {
             // get the proxy and the remote reference by rmiregistry lookup for the cars server
             Registry registry_cars = LocateRegistry.getRegistry(cars_server, rm_port);
             cars_rm = (ResourceManager) registry_cars.lookup("group_7_RM");
+            //tell the server which one it is
             
             // get the proxy and the remote reference by rmiregistry lookup for the flights server
             Registry registry_flights = LocateRegistry.getRegistry(flights_server, rm_port);
@@ -233,6 +234,11 @@ public class MiddlewareImpl implements ResourceManager {
     	{
         	non_committed_items.remove(cust.getKey());
     	}
+    }
+    
+    public void giveName(String name) throws RemoteException
+    {
+    	//not needed in the Middleware; just the RMs
     }
     
     
@@ -449,7 +455,8 @@ public class MiddlewareImpl implements ResourceManager {
      * @param cid
      * @return
      */
-    public int newCustomerExecute(int op_id, int cid)
+    @SuppressWarnings("unchecked")
+	public int newCustomerExecute(int op_id, int cid)
     {
         Trace.info("INFO: RM::newCustomer(" + cid + ") called" );
         
@@ -527,7 +534,6 @@ public class MiddlewareImpl implements ResourceManager {
 	}
 
 	 // Deletes customer from the database. 
-    @SuppressWarnings("rawtypes")
 	public boolean deleteCustomer(int id, int customerID)
         throws RemoteException
     {
@@ -542,7 +548,7 @@ public class MiddlewareImpl implements ResourceManager {
     	return tm.addOperation(id, this, OP_CODE.DELETE_CUSTOMER, args, keys);
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
 	public boolean deleteCustomerExecute(int op_id, int cid) throws RemoteException 
     {
     	Trace.info("RM::deleteCustomer(" + op_id + ", " + cid + ") called" );

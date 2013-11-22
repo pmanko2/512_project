@@ -93,8 +93,10 @@ public class Transaction {
 	
 	//this method creates an operation - replaces an operation if the key and the 
 	//OP_CODE are the same
+	@SuppressWarnings("unused")
 	public Operation createOperation(int id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
+		//TODO Review logic in this method (should it return an arraylist<Operations>?
 		Operation return_value;
 		boolean create_new = true;
 		for (Operation o: operations)
@@ -170,6 +172,7 @@ public class Transaction {
 	
 	class AbortTask extends TimerTask
 	{
+		@SuppressWarnings("unused")
 		private Transaction trxnToAbort;
 		
 		public AbortTask(Transaction txn)

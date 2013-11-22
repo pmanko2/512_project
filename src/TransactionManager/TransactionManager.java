@@ -19,6 +19,7 @@ public class TransactionManager {
 
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
+	//TODO Write transaction_table to disk
 	private static int transaction_id_counter = 0;
 	private static LockManager lm;
 

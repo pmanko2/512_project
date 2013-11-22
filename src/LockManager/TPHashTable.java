@@ -1,20 +1,19 @@
 package LockManager;
 
 import java.util.Vector;
-import java.util.Enumeration;
 
 /*
     HashTable class for the Lock Manager.
 */
-
+@SuppressWarnings({ "rawtypes", "unchecked", "static-access" })
 public class TPHashTable
 {
     private static final int HASH_DEPTH = 8;
     
-    private Vector vect;
+	private Vector vect;
     private int iSize;    // size of the hash table
     
-    TPHashTable(int iSize)
+	TPHashTable(int iSize)
     {
         this.iSize = iSize;
         
@@ -121,7 +120,8 @@ public class TPHashTable
         return null;
     }
 
-    private void printStatus(String msg, int hashSlot, XObj xobj) {
+    @SuppressWarnings("unused")
+	private void printStatus(String msg, int hashSlot, XObj xobj) {
         System.out.println( this.getClass() + "::" + msg + "(slot" + hashSlot + ")::" + xobj.toString() );
     }
     

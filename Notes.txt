@@ -1,0 +1,17 @@
+
+
+TO be maybe used for persistence?:
+http://stackoverflow.com/questions/2808277/can-we-write-a-hashtable-to-a-file
+
+also: 
+Please refer to Lecture Notes > Transactions > Recovery > Pages 3-5 > Slides 6-10.
+
+The master record is a pointer to one of the shadow copies. It points to the one which is currently the latest committed version. It alternates back and forth between the two shadow copies with each successive commit.
+
+The shadow copies contain the actual data itself.
+
+BUGS TO FIX
+-is itinerary working properly? I don't think counts are being updated properly
+-check that counts are updated when a customer is deleted (w/in and w/out trxn)
+
+

@@ -4,6 +4,7 @@ package LockManager;
 import java.util.BitSet;
 import java.util.Vector;
 
+@SuppressWarnings("static-access")
 public class LockManager
 {
     public static final int READ = 0;
@@ -20,7 +21,8 @@ public class LockManager
         super();
     }
     
-    public boolean Lock(int xid, String strData, int lockType) throws DeadlockException {
+	@SuppressWarnings("rawtypes")
+	public boolean Lock(int xid, String strData, int lockType) throws DeadlockException {
     
         // if any parameter is invalid, then return false
         if (xid < 0) { 
@@ -112,7 +114,8 @@ public class LockManager
 
     
     // remove all locks for this transaction in the lock table.
-    public boolean  UnlockAll(int xid) {
+    @SuppressWarnings("rawtypes")
+	public boolean  UnlockAll(int xid) {
 
         // if any parameter is invalid, then return false
         if (xid < 0) {
@@ -227,7 +230,8 @@ public class LockManager
     // appropriately by the caller. If the lock request is a conversion from READ lock to WRITE lock, then bitset 
     // is set. 
     
-    private boolean LockConflict(DataObj dataObj, BitSet bitset) throws DeadlockException, RedundantLockRequestException {
+    @SuppressWarnings("rawtypes")
+	private boolean LockConflict(DataObj dataObj, BitSet bitset) throws DeadlockException, RedundantLockRequestException {
         Vector vect = this.lockTable.elements(dataObj);
         DataObj dataObj2;
         int size = vect.size();
@@ -289,7 +293,8 @@ public class LockManager
 
     }
     
-    private void WaitLock(DataObj dataObj) throws DeadlockException {
+    @SuppressWarnings("rawtypes")
+	private void WaitLock(DataObj dataObj) throws DeadlockException {
         // Check timestamp or add a new one.
         // Will always add new timestamp for each new lock request since
         // the timeObj is deleted each time the transaction succeeds in

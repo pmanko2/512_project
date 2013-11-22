@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Vector;
 
 import javax.transaction.InvalidTransactionException;
@@ -13,16 +12,9 @@ import javax.transaction.InvalidTransactionException;
 import LockManager.DeadlockException;
 import LockManager.LockManager;
 import LockManager.TrxnObj;
-import ResImpl.Car;
 import ResImpl.Customer;
-import ResImpl.Flight;
-import ResImpl.Hotel;
 import ResImpl.MiddlewareImpl;
 import ResImpl.RMHashtable;
-import ResImpl.RMItem;
-import ResImpl.ReservableItem;
-import ResImpl.ReservedItem;
-import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 public class Operation {
@@ -64,12 +56,11 @@ public class Operation {
 	 * executions are not persistent until they are committed.
 	 * @return
 	 */
+	@SuppressWarnings("rawtypes")
 	public boolean execute()
 	{
 		try 
 		{
-			//string used to hold key for whatever item is being worked with
-			String key;
 			boolean to_return = false;
 			
 			switch(operation)
@@ -156,7 +147,6 @@ public class Operation {
 					//obtain locks for all the reserverations they have - if any of these fail, return false;
 					for (Enumeration e = reserved_items.keys(); e.hasMoreElements();) {        
 		                String reservedkey = (String) (e.nextElement());
-		                ReservedItem reserveditem = cust.getReservedItem(reservedkey);
 			
 						if(!(lm.Lock(transaction_id, reservedkey, TrxnObj.WRITE)))
 						{
@@ -267,9 +257,6 @@ public class Operation {
 	{
 		try 
 		{
-			//string used to hold key for whatever item is being worked with
-			String key;
-
 			switch(operation)
 			{
 				case NEW_CUSTOMER:
@@ -327,9 +314,6 @@ public class Operation {
 	{
 		try 
 		{
-			//string used to hold key for whatever item is being worked with
-			String key;
-
 			switch(operation)
 			{
 				case QUERY_CUSTOMER_INFO:

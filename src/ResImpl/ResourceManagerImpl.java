@@ -67,6 +67,19 @@ public class ResourceManagerImpl implements ResourceManager
             System.setSecurityManager(new RMISecurityManager());
         }
     }
+    
+    /**
+     * This method is called whenever something is committed; 
+     */
+    private synchronized void flushToDisk()
+    {
+    	
+    }
+    
+    public void giveName(String name) throws RemoteException
+    {
+    	
+    }
      
     public ResourceManagerImpl() throws RemoteException {
     }
@@ -94,6 +107,10 @@ public class ResourceManagerImpl implements ResourceManager
     	{
     		abort_items.remove("" + op_id);
     	}
+    	
+    	//flush changes to disk
+    	flushToDisk();
+    	
     	return true;
     }
     
@@ -119,6 +136,9 @@ public class ResourceManagerImpl implements ResourceManager
     	{
         	non_committed_items.remove(item.getKey());
     	}
+    	
+    	//flush changes to disk
+    	flushToDisk();
     }
     
     // Reads a data item
@@ -139,7 +159,6 @@ public class ResourceManagerImpl implements ResourceManager
     }
 
     // Writes a data item
-    @SuppressWarnings("unchecked")
     private void writeData( int id, String key, RMItem value )
     {
             m_itemHT.put(key, value);
@@ -311,7 +330,6 @@ public class ResourceManagerImpl implements ResourceManager
     
     // Create a new flight, or add seats to existing flight
     //  NOTE: if flightPrice <= 0 and the flight already exists, it maintains its current price
-    @SuppressWarnings("unchecked")
 	public boolean addFlight(int id, int flightNum, int flightSeats, int flightPrice)
         throws RemoteException
     {
