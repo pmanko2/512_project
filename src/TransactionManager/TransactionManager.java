@@ -55,6 +55,16 @@ public class TransactionManager {
 	}
 	
 	/**
+	 * Method to initiate  
+	 * @param transactionID
+	 * @return
+	 */
+	public boolean prepare(int transactionID)
+	{
+		return true;
+	}
+	
+	/**
 	 * Method used to add an operation to a transaction
 	 * @param transaction_id
 	 * @return
@@ -73,7 +83,6 @@ public class TransactionManager {
 	{
 		return transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
 	}
-
 	
 	public void enlist()
 	{

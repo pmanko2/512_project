@@ -234,6 +234,12 @@ public class MiddlewareImpl implements ResourceManager {
         	non_committed_items.remove(cust.getKey());
     	}
     }
+    
+    
+    public boolean crash(String which)
+    {
+    	return false;
+    }
 	
     // Reads a data item
     private RMItem readData( int id, String key )
