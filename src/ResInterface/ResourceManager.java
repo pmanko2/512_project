@@ -180,5 +180,6 @@ public interface ResourceManager extends Remote
 	public void giveName(String name) 
 	throws RemoteException;
 	
-	public boolean selfDestruct();
+	public boolean selfDestruct()
+	throws RemoteException;
 }
