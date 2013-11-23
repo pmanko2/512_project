@@ -1246,10 +1246,11 @@ public class Client
         case 26:
         	System.out.println("Shuts down servers - currently not implemented, will"
         			+ " be added in next deliverable.");
+        	break;
         default:
-        System.out.println(command);
-        System.out.println("The interface does not support this command.");
-        break;
+	        System.out.println(command);
+	        System.out.println("The interface does not support this command.");
+	        break;
         }
     }
     
