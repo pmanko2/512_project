@@ -244,21 +244,29 @@ public class MiddlewareImpl implements ResourceManager {
     
     public boolean crash(String which)
     {
-    	if(which.equals("cars"))
+    	try 
     	{
-    		return cars_rm.selfDestruct();
+        	if(which.equals("cars"))
+        	{
+        		return cars_rm.selfDestruct();
+        	}
+        	else if(which.equals("flights"))
+        	{
+        		return flights_rm.selfDestruct();
+        	}
+        	else if(which.equals("rooms"))
+        	{
+        		return rooms_rm.selfDestruct();
+        	}
+        	else
+        	{
+        		return this.selfDestruct();
+        	}
     	}
-    	else if(which.equals("flights"))
+    	catch (RemoteException e)
     	{
-    		return flights_rm.selfDestruct();
-    	}
-    	else if(which.equals("rooms"))
-    	{
-    		return rooms_rm.selfDestruct();
-    	}
-    	else
-    	{
-    		return this.selfDestruct();
+    		e.printStackTrace();
+        	return false;
     	}
     }
 	
@@ -939,7 +947,7 @@ public class MiddlewareImpl implements ResourceManager {
 	}
 
 	@Override
-	public boolean selfDestruct() {
+	public boolean selfDestruct() throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
 	}

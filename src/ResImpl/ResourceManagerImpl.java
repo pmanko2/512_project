@@ -14,6 +14,11 @@ package ResImpl;
 import ResInterface.*;
 
 import java.util.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
@@ -26,7 +31,8 @@ import javax.transaction.InvalidTransactionException;
 public class ResourceManagerImpl implements ResourceManager 
 {
 
-	protected RMHashtable m_itemHT = new RMHashtable();
+	//TODO ensure declaring this as static isn't a problem
+	protected static RMHashtable m_itemHT = new RMHashtable();
 	private RMHashtable non_committed_items = new RMHashtable();
 	private RMHashtable abort_items = new RMHashtable();
 	private static String rm_name;
@@ -61,6 +67,15 @@ public class ResourceManagerImpl implements ResourceManager
             // Bind the remote object's stub in the registry
             Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("group_7_RM", rm);
+            
+            //read in any existing data
+        	String filePathItems = "~/comp512/data/" + rm_name + "/items_table";
+
+        	FileInputStream fis = new FileInputStream(filePathItems);
+        	ObjectInputStream ois = new ObjectInputStream(fis);
+
+        	m_itemHT = (RMHashtable) ois.readObject();
+        	ois.close();
 
             System.out.println("Server ready");
         } catch (Exception e) {
@@ -79,7 +94,18 @@ public class ResourceManagerImpl implements ResourceManager
      */
     private synchronized void flushToDisk()
     {
-    	
+    	//create file paths for data for this RM
+    	String filePathItems = "~/comp512/data/" + rm_name + "/items_table";
+
+    	//write to disk
+       	try {
+	    	FileOutputStream fos = new FileOutputStream(filePathItems);
+	    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(m_itemHT);
+			oos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}  	
     }
     
     public void giveName(String name) throws RemoteException
@@ -680,7 +706,7 @@ public class ResourceManagerImpl implements ResourceManager
 	}
 
 	@Override
-	public boolean selfDestruct() {
+	public boolean selfDestruct() throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
 	}
