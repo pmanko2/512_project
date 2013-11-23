@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -60,7 +61,7 @@ public class TransactionManager {
 	 * @param transactionID
 	 * @return
 	 */
-	public boolean prepare(int transactionID)
+	public boolean prepare(int transactionID) throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
 		Transaction toVote = transaction_table.get("" + transactionID);
 		

@@ -936,7 +936,7 @@ public class Client
 		}
 	}
 	
-	private static void autoCommit(String success)
+	private static void autoCommit(String success) throws TransactionAbortedException
 	{
         try {
         	if (!user_said_start)
