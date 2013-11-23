@@ -5,7 +5,7 @@
 #http://www.linuxproblem.org/art_9.html
 
 #Info for servers
-SERVER_HOSTS="lab2-1.cs.mcgill.ca lab2-15.cs.mcgill.ca lab2-14.cs.mcgill.ca"
+SERVER_HOSTS="lab2-1.cs.mcgill.ca lab2-3.cs.mcgill.ca lab2-4.cs.mcgill.ca"
 MIDDLEWARE_HOST="teaching.cs.mcgill.ca"
 USERNAME=nwebst1
 
@@ -43,14 +43,19 @@ trap control_c SIGINT
 
 start()
 {
-    SERVER_SCRIPT=“~/comp512/runserver.sh && exit"
+    SERVER_SCRIPT="~/comp512/runserver.sh && exit"
     MIDDLEWARE_SCRIPT="~/comp512/runmiddleware.sh && exit"
+
+	SERVER_SCRIPT_NEW=("~/comp512/runserver_flights.sh" "~/comp512/runserver_cars.sh" "~/comp512/runserver_hotels.sh");
+
+	index=0
 
     #start up RM servers
     for HOSTNAME in ${SERVER_HOSTS} ; do
         printf "\nConnecting to ${HOSTNAME}...\n\n"
-        ssh -l ${USERNAME} ${HOSTNAME} "${SERVER_SCRIPT}" &
+        ssh -l ${USERNAME} ${HOSTNAME} "${SERVER_SCRIPT_NEW[index]}" &
         sleep 5
+	index=$index+1
     done
 
     #start up Middleware Server

@@ -29,6 +29,7 @@ public class ResourceManagerImpl implements ResourceManager
 	protected RMHashtable m_itemHT = new RMHashtable();
 	private RMHashtable non_committed_items = new RMHashtable();
 	private RMHashtable abort_items = new RMHashtable();
+	private static String rm_name;
 
     public static void main(String args[]) {
         // Figure out where server is running
@@ -36,14 +37,19 @@ public class ResourceManagerImpl implements ResourceManager
         int port = 7707;
 
         if (args.length == 1) {
-            server = server + ":" + args[0];
-            port = Integer.parseInt(args[0]);
-        } else if (args.length != 0 &&  args.length != 1) {
+        	rm_name = args[0];
+        } else if (args.length == 2) {
+        	rm_name = args[0];
+            server = server + ":" + args[1];
+            port = Integer.parseInt(args[1]);
+        } else if (args.length != 1 &&  args.length != 2) {
             System.err.println ("Wrong usage");
             System.out.println("Usage: java ResImpl.ResourceManagerImpl [port]");
             System.exit(1);
         }
 
+        Trace.info("RM_NAME: " + rm_name);
+        
         try {
             // create a new Server object
             ResourceManagerImpl obj = new ResourceManagerImpl();
