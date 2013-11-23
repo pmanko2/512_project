@@ -672,9 +672,16 @@ public class ResourceManagerImpl implements ResourceManager
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
-	public void shutdown()
-	{
+
+	@Override
+	public boolean selfDestruct() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void shutdown() throws RemoteException {
+		// TODO Auto-generated method stub
 		
 	}
 }

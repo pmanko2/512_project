@@ -189,7 +189,7 @@ public class MiddlewareImpl implements ResourceManager {
      */
     public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException
     {
-    	return tm.commit(transaction_id);
+    	return tm.prepare(transaction_id);
     }
 
     /**
@@ -244,7 +244,22 @@ public class MiddlewareImpl implements ResourceManager {
     
     public boolean crash(String which)
     {
-    	return false;
+    	if(which.equals("cars"))
+    	{
+    		return cars_rm.selfDestruct();
+    	}
+    	else if(which.equals("flights"))
+    	{
+    		return flights_rm.selfDestruct();
+    	}
+    	else if(which.equals("rooms"))
+    	{
+    		return rooms_rm.selfDestruct();
+    	}
+    	else
+    	{
+    		return this.selfDestruct();
+    	}
     }
 	
     // Reads a data item
@@ -921,6 +936,12 @@ public class MiddlewareImpl implements ResourceManager {
 		cars_rm.shutdown();
 		flights_rm.shutdown();
 		rooms_rm.shutdown();
+	}
+
+	@Override
+	public boolean selfDestruct() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 
