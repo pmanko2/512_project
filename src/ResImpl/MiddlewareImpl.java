@@ -22,6 +22,7 @@ import javax.transaction.InvalidTransactionException;
 
 import ResInterface.ResourceManager;
 import TransactionManager.OP_CODE;
+import TransactionManager.TransactionAbortedException;
 import TransactionManager.TransactionManager;
 
 public class MiddlewareImpl implements ResourceManager {
