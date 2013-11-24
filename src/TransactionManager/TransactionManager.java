@@ -42,7 +42,7 @@ public class TransactionManager {
 		return to_return;
 	}
 	
-	private synchronized boolean commit(int transaction_id) throws InvalidTransactionException
+	public synchronized boolean commit(int transaction_id) throws InvalidTransactionException
 	{
 		boolean return_value = transaction_table.get("" + transaction_id).commit();
 		transaction_table.remove("" + transaction_id);
@@ -62,8 +62,7 @@ public class TransactionManager {
 	 */
 	public boolean prepare(int transactionID)
 	{
-		Transaction toVote = transaction_table.get("" + transactionID);
-		
+		Transaction toVote = transaction_table.get("" + transactionID);	
 		return true;
 	}
 	

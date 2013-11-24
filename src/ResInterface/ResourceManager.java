@@ -174,12 +174,9 @@ public interface ResourceManager extends Remote
 	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) 
 	throws RemoteException;
 	
-	/**
-	 * Method used to give RM its name (so it knows which RM it is)
-	 */
-	public void giveName(String name) 
+	public boolean selfDestruct()
 	throws RemoteException;
 	
-	public boolean selfDestruct()
+	public void flushToDisk() 
 	throws RemoteException;
 }

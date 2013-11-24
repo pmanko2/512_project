@@ -351,6 +351,7 @@ public class Operation {
 	public boolean commit()
 	{
 		try {			
+			
 			boolean result;
 			if (rm instanceof MiddlewareImpl)
 			{
