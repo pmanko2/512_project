@@ -13,5 +13,5 @@ The shadow copies contain the actual data itself.
 BUGS TO FIX
 -is itinerary working properly? I don't think counts are being updated properly
 -check that counts are updated when a customer is deleted (w/in and w/out trxn)
-
-
+-customer lock on abort isn't working
+-should we be writing to disk/committing when we query something?

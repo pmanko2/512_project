@@ -147,6 +147,7 @@ public class Transaction {
 	 */
 	public boolean commit()
 	{		
+		System.out.println("SIZE OF OPERATIONS LIST: " + operations.size());
 		for (Operation o : operations)
 		{
 			o.commit();

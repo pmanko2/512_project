@@ -12,9 +12,11 @@
 package ResImpl;
 
 import ResInterface.*;
+import TransactionManager.OP_CODE;
 import TransactionManager.Vote;
 
 import java.util.*;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,8 +36,8 @@ public class ResourceManagerImpl implements ResourceManager
 
 	//TODO ensure declaring this as static isn't a problem
 	protected static RMHashtable m_itemHT = new RMHashtable();
-	private RMHashtable non_committed_items = new RMHashtable();
-	private RMHashtable abort_items = new RMHashtable();
+	private static RMHashtable non_committed_items = new RMHashtable();
+	private static RMHashtable abort_items = new RMHashtable();
 	private static String rm_name;
 
     public static void main(String args[]) {
@@ -70,14 +72,62 @@ public class ResourceManagerImpl implements ResourceManager
             registry.rebind("group_7_RM", rm);
             
             //read in any existing data
-        	String filePathItems = "~/comp512/data/" + rm_name + "/items_table";
+            System.out.println("Reading in existing data...");
+            String masterPath = "/home/2011/nwebst1/comp512/data/" + rm_name + "/master_record.loc";
+            File f = new File(masterPath);
+            //if Master Record doesn't exist we ignore all other file reads
+            if (f.exists())
+            {
+            	//get path to master record
+            	FileInputStream fis = new FileInputStream(masterPath);
+            	ObjectInputStream ois = new ObjectInputStream(fis);
+            	String masterRecordPath = (String) ois.readObject();
+            	fis.close();
+            	ois.close();
+            	
+            	//get paths to data items for this RM
+            	String filePathItems = masterRecordPath + "items_table.data";
+            	String filePathCommit = masterRecordPath + "non_committed_items_table.data";
+            	String filePathAbort = masterRecordPath + "abort_items_table.data";
+            	
+            	//create file objects for these data files
+            	File items_file = new File(filePathItems);
+    	      	File commit_file = new File(filePathCommit);
+    	      	File abort_file = new File(filePathAbort);
+    	      	
+    	      	//load items data into memory
+    	    	if(items_file.exists()){
+    	        	fis = new FileInputStream(items_file);
+    	        	ois = new ObjectInputStream(fis);
 
-        	FileInputStream fis = new FileInputStream(filePathItems);
-        	ObjectInputStream ois = new ObjectInputStream(fis);
+    	        	m_itemHT = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+    	    	
+    	      	//load commit data into memory
+    	    	if(commit_file.exists()){
+    	        	fis = new FileInputStream(commit_file);
+    	        	ois = new ObjectInputStream(fis);
 
-        	m_itemHT = (RMHashtable) ois.readObject();
-        	ois.close();
+    	        	non_committed_items = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+    	    	
+    	      	//load abort data into memory
+    	    	if(abort_file.exists()){
+    	        	fis = new FileInputStream(abort_file);
+    	        	ois = new ObjectInputStream(fis);
 
+    	        	abort_items = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+            }
+            
+           
+    	
             System.out.println("Server ready");
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -91,27 +141,123 @@ public class ResourceManagerImpl implements ResourceManager
     }
     
     /**
-     * This method is called whenever something is committed; 
+     * This method is called whenever something is committed/aborted in order to flush changes to disk; 
      */
-    private synchronized void flushToDisk()
-    {
-    	//create file paths for data for this RM
-    	String filePathItems = "~/comp512/data/" + rm_name + "/items_table";
-
-    	//write to disk
-       	try {
-	    	FileOutputStream fos = new FileOutputStream(filePathItems);
+    public synchronized void flushToDisk() throws RemoteException
+    {   
+    	try {
+	    	//retrieve master record file (if it doesn't exist, create it and write out string)
+	        String masterPath = "/home/2011/nwebst1/comp512/data/" + rm_name + "/master_record.loc";
+	        String dataPath;
+	        
+	        File masterFile = new File(masterPath);
+	        
+	        //if master doesn't exist, create it and write default path
+	        if (!masterFile.exists())
+	        {
+	        	//create master record file
+	        	masterFile.getParentFile().getParentFile().mkdir();
+	        	masterFile.getParentFile().mkdir();
+	        	masterFile.createNewFile();
+	        	
+	        	//create default string
+	        	dataPath = "/home/2011/nwebst1/comp512/data/" + rm_name + "/dataA/";
+	        	
+	        	FileOutputStream fos = new FileOutputStream(masterFile);
+	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	        	oos.writeObject(dataPath);
+	        	fos.close();
+	        	oos.close();
+	        }
+	        //otherwise, read in string file path for master record location
+	        else
+	        {
+	        	FileInputStream fis = new FileInputStream(masterFile);
+	        	ObjectInputStream ois = new ObjectInputStream(fis);
+	        	dataPath = (String) ois.readObject();
+	        	fis.close();
+	        	ois.close();
+	        }
+	        
+	        
+	    	//create file paths for data for this RM
+        	//get paths to data items for this RM
+        	String filePathItems = dataPath + "items_table.data";
+        	String filePathCommit = dataPath + "non_committed_items_table.data";
+        	String filePathAbort = dataPath + "abort_items_table.data";
+        	
+        	//create file objects so that we can write data to disk
+	    	File items_file = new File(filePathItems);
+	    	File commit_file = new File(filePathCommit);
+	    	File abort_file = new File(filePathAbort);
+	    	
+    		// if files don't exist, then create then
+    		if (!items_file.exists()) {
+    			items_file.getParentFile().mkdirs();
+    			items_file.createNewFile();
+    		}
+    		if (!commit_file.exists()) {
+    			commit_file.getParentFile().mkdirs();
+    			commit_file.createNewFile();
+    		}    		
+    		if (!abort_file.exists()) {
+    			abort_file.getParentFile().mkdirs();
+    			abort_file.createNewFile();
+    		}
+    		
+        	//write "persistent" items to disk
+	    	FileOutputStream fos = new FileOutputStream(items_file);
 	    	ObjectOutputStream oos = new ObjectOutputStream(fos);
 			oos.writeObject(m_itemHT);
+			fos.close();
 			oos.close();
+			
+        	//write "commit" items to disk
+	    	fos = new FileOutputStream(commit_file);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(non_committed_items);
+			fos.close();
+			oos.close();
+			
+        	//write "abort" items to disk
+	    	fos = new FileOutputStream(abort_file);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(abort_items);
+			fos.close();
+			oos.close();
+			
+			//update master record
+			String newLocation = "/home/2011/nwebst1/comp512/data/" + rm_name;
+			
+			String[] masterPathArray = dataPath.split("/");
+			String data_location = masterPathArray[masterPathArray.length - 1];
+			
+			if (data_location.equals("dataA"))
+			{
+				newLocation = newLocation + "/dataB/";
+			}
+			else
+			{
+				newLocation = newLocation + "/dataA/";
+			}
+			
+			Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+			
+			//write new location to master_record.loc
+			masterFile = new File(masterPath);
+			fos = new FileOutputStream(masterFile);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(newLocation);
+			fos.close();
+			oos.close();
+			
+			
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}  	
-    }
-    
-    public void giveName(String name) throws RemoteException
-    {
-    	
     }
      
     public ResourceManagerImpl() throws RemoteException {
@@ -143,7 +289,7 @@ public class ResourceManagerImpl implements ResourceManager
     	
     	//flush changes to disk
     	flushToDisk();
-    	
+
     	return true;
     }
     
@@ -153,7 +299,7 @@ public class ResourceManagerImpl implements ResourceManager
      * we don't have to manually undo increments or decrements that are caused
      * when calling addx on an item x that already exists
      */
-    public void abort(int op_id)
+    public void abort(int op_id) throws RemoteException
     {
     	//put back any old data (used for cases where the state of an object is changed
     	//instead of having been simply newly created
@@ -714,15 +860,24 @@ public class ResourceManagerImpl implements ResourceManager
 
 	@Override
 	public void shutdown() throws RemoteException {
-		// TODO Auto-generated method stub
-		
+		flushToDisk();
+		System.exit(0);
 	}
 
 	// check if operation has any temporary data, if it does vote yes otherwise vote no
 	@Override
-	public Vote vote(int operationID) 
+	public Vote vote(int operationID, OP_CODE code) 
 	{
 		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		
+		boolean queryMethod = code.equals(OP_CODE.QUERY_CAR_PRICE) || code.equals(OP_CODE.QUERY_CARS) 
+				|| code.equals(OP_CODE.QUERY_CUSTOMER_INFO) || code.equals(OP_CODE.QUERY_FLIGHT_PRICE) 
+				|| code.equals(OP_CODE.QUERY_FLIGHTS)  || code.equals(OP_CODE.QUERY_ROOM_PRICE) 
+				|| code.equals(OP_CODE.QUERY_ROOMS);
+		
+		if(!voteYes && queryMethod)
+			voteYes = true;
+		
 		String vote = ((voteYes) ? "yes" : "no");
 		
 		return new Vote(vote, rm_name);

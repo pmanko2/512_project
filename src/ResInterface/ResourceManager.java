@@ -9,6 +9,7 @@ import javax.transaction.InvalidTransactionException;
 
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
+import TransactionManager.OP_CODE;
 import TransactionManager.Vote;
 
 /** 
@@ -175,14 +176,11 @@ public interface ResourceManager extends Remote
 	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) 
 	throws RemoteException;
 	
-	/**
-	 * Method used to give RM its name (so it knows which RM it is)
-	 */
-	public void giveName(String name) 
-	throws RemoteException;
-	
 	public boolean selfDestruct()
 	throws RemoteException;
 	
-	public Vote vote(int operationID);
+	public void flushToDisk() 
+	throws RemoteException;
+	
+	public Vote vote(int operationID, OP_CODE code);
 }

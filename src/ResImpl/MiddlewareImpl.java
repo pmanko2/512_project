@@ -1,5 +1,11 @@
 package ResImpl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -34,9 +40,9 @@ public class MiddlewareImpl implements ResourceManager {
     //this references the transaction manager object
     private static TransactionManager tm = null;
 
-	protected RMHashtable m_itemHT = new RMHashtable();
-	private RMHashtable non_committed_items = new RMHashtable();
-	private RMHashtable abort_items = new RMHashtable();
+	protected static RMHashtable m_itemHT = new RMHashtable();
+	private static RMHashtable non_committed_items = new RMHashtable();
+	private static RMHashtable abort_items = new RMHashtable();
 
 	/**
 	 * Middleware takes care of all reservations - this is due to the inseparability of the 
@@ -57,9 +63,9 @@ public class MiddlewareImpl implements ResourceManager {
         /**
          * RM SERVERS
          */
-        String cars_server = "lab2-1.cs.mcgill.ca";        
-        String flights_server = "lab2-11.cs.mcgill.ca";
-        String rooms_server = "lab2-15.cs.mcgill.ca";
+        String flights_server = "lab2-1.cs.mcgill.ca";
+        String cars_server = "lab2-3.cs.mcgill.ca";        
+        String rooms_server = "lab2-4.cs.mcgill.ca";
         
         int rm_port = 7707;
 
@@ -80,8 +86,8 @@ public class MiddlewareImpl implements ResourceManager {
         }
         //if 3 args, assume that the three arguments are the RM servers
         else if (args.length == 3) {
-        	cars_server = args[0];
-        	flights_server = args[1];
+        	flights_server = args[0];
+        	cars_server = args[1];
         	rooms_server = args[2];
         }
         //if 4 args, assume that the first argument is a port number and the other 3
@@ -98,8 +104,8 @@ public class MiddlewareImpl implements ResourceManager {
         		System.out.println("Usage: java ResImpl.ResourceManagerImpl [port] [cars_rm_server] [flights_rm_server] [rooms_rm_server]");
         		System.exit(1);
         	}
-        	cars_server = args[1];
-        	flights_server = args[2];
+        	flights_server = args[1];
+        	cars_server = args[2];
         	rooms_server = args[3];
         }
         //unless there were no args (which is okay, this will then use default values)
@@ -113,6 +119,65 @@ public class MiddlewareImpl implements ResourceManager {
         
 
         try {
+        	/**
+        	 * LOAD DATA INTO MAIN  MEMORY
+        	 */
+        	//read in any existing data
+            System.out.println("Reading in existing data...");
+            String masterPath = "/home/2011/nwebst1/comp512/data/customers/master_record.loc";
+            File f = new File(masterPath);
+            //if Master Record doesn't exist we ignore all other file reads
+            if (f.exists())
+            {
+            	//get path to master record
+            	FileInputStream fis = new FileInputStream(masterPath);
+            	ObjectInputStream ois = new ObjectInputStream(fis);
+            	String masterRecordPath = (String) ois.readObject();
+            	fis.close();
+            	ois.close();
+            	
+            	//get paths to data items for this RM
+            	String filePathItems = masterRecordPath + "items_table.data";
+            	String filePathCommit = masterRecordPath + "non_committed_items_table.data";
+            	String filePathAbort = masterRecordPath + "abort_items_table.data";
+            	
+            	//create file objects for these data files
+            	File items_file = new File(filePathItems);
+    	      	File commit_file = new File(filePathCommit);
+    	      	File abort_file = new File(filePathAbort);
+    	      	
+    	      	//load items data into memory
+    	    	if(items_file.exists()){
+    	        	fis = new FileInputStream(items_file);
+    	        	ois = new ObjectInputStream(fis);
+
+    	        	m_itemHT = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+    	    	
+    	      	//load commit data into memory
+    	    	if(commit_file.exists()){
+    	        	fis = new FileInputStream(commit_file);
+    	        	ois = new ObjectInputStream(fis);
+
+    	        	non_committed_items = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+    	    	
+    	      	//load abort data into memory
+    	    	if(abort_file.exists()){
+    	        	fis = new FileInputStream(abort_file);
+    	        	ois = new ObjectInputStream(fis);
+
+    	        	abort_items = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+            }
+        	
+        	
         	/**
         	 * CONNECT TO RMIREGISTRY AS SERVER TO BE CONNECTED TO FROM CLIENT
         	 */
@@ -182,7 +247,6 @@ public class MiddlewareImpl implements ResourceManager {
    public int start() throws RemoteException
     {
 	   int return_value = tm.start();
-	   Trace.info("" + return_value);
 	   return return_value;
     }
     
@@ -191,14 +255,7 @@ public class MiddlewareImpl implements ResourceManager {
      */
     public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException
     {
-    	try {
-			return tm.prepare(transaction_id);
-		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    	
-    	return true;
+    	return tm.commit(transaction_id);
     }
 
     /**
@@ -212,6 +269,9 @@ public class MiddlewareImpl implements ResourceManager {
         	writeData(op_id, item.getKey(), item);
         	non_committed_items.remove("" + op_id);
     	}
+    	
+    	flushToDisk();
+    	
     	return true;
     }
     
@@ -243,13 +303,10 @@ public class MiddlewareImpl implements ResourceManager {
     	{
         	non_committed_items.remove(cust.getKey());
     	}
-    }
-    
-    public void giveName(String name) throws RemoteException
-    {
-    	//not needed in the Middleware; just the RMs
-    }
-    
+    	
+    	flushToDisk();
+    	return;
+    }   
     
     public boolean crash(String which)
     {
@@ -278,6 +335,127 @@ public class MiddlewareImpl implements ResourceManager {
         	return false;
     	}
     }
+    
+    /**
+     * This method is called whenever something is committed/aborted in order to flush changes to disk; 
+     */
+    public synchronized void flushToDisk()
+    {   
+    	try {
+	    	//retrieve master record file (if it doesn't exist, create it and write out string)
+	        String masterPath = "/home/2011/nwebst1/comp512/data/customers/master_record.loc";
+	        String dataPath;
+	        
+	        File masterFile = new File(masterPath);
+	        
+	        //if master doesn't exist, create it and write default path
+	        if (!masterFile.exists())
+	        {
+	        	//create master record file
+	        	masterFile.getParentFile().getParentFile().mkdir();
+	        	masterFile.getParentFile().mkdir();
+	        	masterFile.createNewFile();
+	        	
+	        	//create default string
+	        	dataPath = "/home/2011/nwebst1/comp512/data/customers/dataA/";
+	        	
+	        	FileOutputStream fos = new FileOutputStream(masterFile);
+	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	        	oos.writeObject(dataPath);
+	        	fos.close();
+	        	oos.close();
+	        }
+	        //otherwise, read in string file path for master record location
+	        else
+	        {
+	        	FileInputStream fis = new FileInputStream(masterFile);
+	        	ObjectInputStream ois = new ObjectInputStream(fis);
+	        	dataPath = (String) ois.readObject();
+	        	fis.close();
+	        	ois.close();
+	        }
+	        
+	        
+	    	//create file paths for data for this RM
+        	//get paths to data items for this RM
+        	String filePathItems = dataPath + "items_table.data";
+        	String filePathCommit = dataPath + "non_committed_items_table.data";
+        	String filePathAbort = dataPath + "abort_items_table.data";
+        	
+        	//create file objects so that we can write data to disk
+	    	File items_file = new File(filePathItems);
+	    	File commit_file = new File(filePathCommit);
+	    	File abort_file = new File(filePathAbort);
+	    	
+    		// if files don't exist, then create then
+    		if (!items_file.exists()) {
+    			items_file.getParentFile().mkdirs();
+    			items_file.createNewFile();
+    		}
+    		if (!commit_file.exists()) {
+    			commit_file.getParentFile().mkdirs();
+    			commit_file.createNewFile();
+    		}    		
+    		if (!abort_file.exists()) {
+    			abort_file.getParentFile().mkdirs();
+    			abort_file.createNewFile();
+    		}
+    		
+        	//write "persistent" items to disk
+	    	FileOutputStream fos = new FileOutputStream(items_file);
+	    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(m_itemHT);
+			fos.close();
+			oos.close();
+			
+        	//write "commit" items to disk
+	    	fos = new FileOutputStream(commit_file);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(non_committed_items);
+			fos.close();
+			oos.close();
+			
+        	//write "abort" items to disk
+	    	fos = new FileOutputStream(abort_file);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(abort_items);
+			fos.close();
+			oos.close();
+			
+			//update master record
+			String newLocation = "/home/2011/nwebst1/comp512/data/customers";
+			
+			String[] masterPathArray = dataPath.split("/");
+			String data_location = masterPathArray[masterPathArray.length - 1];
+			
+			if (data_location.equals("dataA"))
+			{
+				newLocation = newLocation + "/dataB/";
+			}
+			else
+			{
+				newLocation = newLocation + "/dataA/";
+			}
+			
+			Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+			
+			//write new location to master_record.loc
+			masterFile = new File(masterPath);
+			fos = new FileOutputStream(masterFile);
+	    	oos = new ObjectOutputStream(fos);
+			oos.writeObject(newLocation);
+			fos.close();
+			oos.close();
+			
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  	
+    }
+     
 	
     // Reads a data item
     private RMItem readData( int id, String key )
@@ -768,7 +946,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
-			
+		
 		HashMap<String, Object> args = new HashMap<String, Object>();
 		args.put("flight_key", Flight.getKey(flightNumber));
 		args.put("customer_key", Customer.getKey(customer));
@@ -780,7 +958,22 @@ public class MiddlewareImpl implements ResourceManager {
 		keys.add((String)args.get("customer_key"));
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args, keys);
+		boolean toReturn = tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args, keys);
+		
+		//TODO to be removed if something other than this is found to work
+		
+		//must also create operation to query flight to ensure changes in counts are written to disk
+		//upon commit of reservation in MW
+		HashMap<String, Object> args2 = new HashMap<String, Object>();
+		args2.put("key", Flight.getKey(flightNumber));
+		args2.put("flightNum", flightNumber);
+		
+		ArrayList<String> keys2 = new ArrayList<String>();
+		keys2.add((String)args2.get("key"));
+		
+		tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args2, keys2);
+		
+		return toReturn;
 	}
 	
 	public boolean reserveFlightExecute(int id, int customer, int flightNumber)
@@ -950,9 +1143,11 @@ public class MiddlewareImpl implements ResourceManager {
 	
 	public void shutdown() throws RemoteException
 	{
-		cars_rm.shutdown();
 		flights_rm.shutdown();
+		cars_rm.shutdown();
 		rooms_rm.shutdown();
+		flushToDisk();
+		System.exit(0);
 	}
 
 	@Override
@@ -962,9 +1157,18 @@ public class MiddlewareImpl implements ResourceManager {
 	}
 
 	@Override
-	public Vote vote(int operationID) 
+	public Vote vote(int operationID, OP_CODE code) 
 	{
 		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		
+		boolean queryMethod = code.equals(OP_CODE.QUERY_CAR_PRICE) || code.equals(OP_CODE.QUERY_CARS) 
+				|| code.equals(OP_CODE.QUERY_CUSTOMER_INFO) || code.equals(OP_CODE.QUERY_FLIGHT_PRICE) 
+				|| code.equals(OP_CODE.QUERY_FLIGHTS)  || code.equals(OP_CODE.QUERY_ROOM_PRICE) 
+				|| code.equals(OP_CODE.QUERY_ROOMS);
+		
+		if(!voteYes && queryMethod)
+			voteYes = true;
+		
 		String vote = ((voteYes) ? "yes" : "no");
 		
 		return new Vote(vote, "middleware");

@@ -350,6 +350,7 @@ public class Operation {
 	public boolean commit()
 	{
 		try {			
+			
 			boolean result;
 			if (rm instanceof MiddlewareImpl)
 			{
@@ -423,6 +424,6 @@ public class Operation {
 	 */
 	public Vote requestVoteFromRM()
 	{
-		return rm.vote(this.OP_ID);
+		return rm.vote(this.OP_ID, this.operation);
 	}
 }

@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +17,7 @@ import ResInterface.ResourceManager;
  * @author nic
  *
  */
-public class TransactionManager {
+public class TransactionManager implements Serializable{
 
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
@@ -43,7 +44,7 @@ public class TransactionManager {
 		return to_return;
 	}
 	
-	private synchronized boolean commit(int transaction_id) throws InvalidTransactionException
+	public synchronized boolean commit(int transaction_id) throws InvalidTransactionException
 	{
 		boolean return_value = transaction_table.get("" + transaction_id).commit();
 		transaction_table.remove("" + transaction_id);
