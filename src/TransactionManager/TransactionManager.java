@@ -63,9 +63,17 @@ public class TransactionManager {
 	 */
 	public boolean prepare(int transactionID) throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
-		Transaction toVote = transaction_table.get("" + transactionID);
+		boolean allYes = transaction_table.get("" + transactionID).startVotingProcess();
 		
-		return true;
+		if(allYes)
+		{
+			return this.commit(transactionID);
+		}
+		else
+		{
+			this.abort(transactionID);
+			return false;
+		}
 	}
 	
 	/**

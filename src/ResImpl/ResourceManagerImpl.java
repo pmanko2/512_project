@@ -12,6 +12,7 @@
 package ResImpl;
 
 import ResInterface.*;
+import TransactionManager.Vote;
 
 import java.util.*;
 import java.io.FileInputStream;
@@ -714,6 +715,17 @@ public class ResourceManagerImpl implements ResourceManager
 	@Override
 	public void shutdown() throws RemoteException {
 		// TODO Auto-generated method stub
+		
+	}
+
+	// check if operation has any temporary data, if it does vote yes otherwise vote no
+	@Override
+	public Vote vote(int operationID) 
+	{
+		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		String vote = ((voteYes) ? "yes" : "no");
+		
+		return new Vote(vote, rm_name);
 		
 	}
 }

@@ -158,6 +158,26 @@ public class Transaction {
 	}
 	
 	/**
+	 * method prompts each operation(and consequently RM) to submit a vote on whether it wants to commit
+	 * If all votes are yes then true otherwise false
+	 * @return boolean indicating if voting was successful or not
+	 */
+	public boolean startVotingProcess()
+	{
+		// go through all operation votes. if we have a no vote, return false
+		for(Operation voter : operations)
+		{
+			Vote currentVote = voter.requestVoteFromRM();
+			
+			if(currentVote.getVote().equals("no"))
+				return false;
+		}
+		
+		return true;
+
+	}
+	
+	/**
 	 * Aborts this transaction
 	 */
 	public void abort()

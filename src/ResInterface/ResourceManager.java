@@ -9,6 +9,7 @@ import javax.transaction.InvalidTransactionException;
 
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
+import TransactionManager.Vote;
 
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -182,4 +183,6 @@ public interface ResourceManager extends Remote
 	
 	public boolean selfDestruct()
 	throws RemoteException;
+	
+	public Vote vote(int operationID);
 }

@@ -18,6 +18,7 @@ import ResInterface.ResourceManager;
 import TransactionManager.OP_CODE;
 import TransactionManager.TransactionAbortedException;
 import TransactionManager.TransactionManager;
+import TransactionManager.Vote;
 
 public class MiddlewareImpl implements ResourceManager {
 	
@@ -958,6 +959,15 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean selfDestruct() throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public Vote vote(int operationID) 
+	{
+		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		String vote = ((voteYes) ? "yes" : "no");
+		
+		return new Vote(vote, "middleware");
 	}
 
 
