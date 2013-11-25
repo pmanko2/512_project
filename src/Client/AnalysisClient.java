@@ -1,6 +1,7 @@
 package Client;
 
 import ResInterface.*;
+import TransactionManager.TransactionAbortedException;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -299,6 +300,8 @@ public class AnalysisClient
 			
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
 		}
     }
     
@@ -326,6 +329,8 @@ public class AnalysisClient
 			}
 			
 		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
 			e.printStackTrace();
 		}
     }
@@ -362,6 +367,8 @@ public class AnalysisClient
 			
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
 		}
     }
     
@@ -395,6 +402,8 @@ public class AnalysisClient
 			
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
 		}
     }
     
@@ -424,6 +433,8 @@ public class AnalysisClient
 			
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
 		}
     }
     
@@ -444,6 +455,8 @@ public class AnalysisClient
 			}
 			
 		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
 			e.printStackTrace();
 		}
     }
@@ -466,6 +479,8 @@ public class AnalysisClient
 			
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			e.printStackTrace();
 		}
     }
     
@@ -486,6 +501,8 @@ public class AnalysisClient
 			}
 			
 		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
 			e.printStackTrace();
 		}
     }

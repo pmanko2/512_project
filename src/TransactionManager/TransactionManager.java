@@ -4,6 +4,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -23,11 +27,20 @@ public class TransactionManager {
 	//TODO Write transaction_table to disk
 	private static int transaction_id_counter = 0;
 	private static LockManager lm;
+	private final ScheduledExecutorService scheduler;
+	private Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
+	private long secondsToLive;
 
 	public TransactionManager()
 	{
 		transaction_table = new Hashtable<String, Transaction>();
 		lm = new LockManager();
+		
+		//set up scheduler object
+		//TODO need to shut this down on exit
+		scheduler = Executors.newScheduledThreadPool(1000);
+		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
+		secondsToLive = 60;
 	}
 	
 	/**
@@ -40,20 +53,40 @@ public class TransactionManager {
 		int to_return = t.getID();
 		transaction_id_counter++;
 		transaction_table.put("" + to_return, t);
+		
+		//start TIL timer for this transaction
+		TransactionTimer tt = new TransactionTimer(to_return, this);
+		ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(tt, secondsToLive, TimeUnit.SECONDS);
+		scheduledFutures.put("" + to_return, scheduledFuture);
 		return to_return;
 	}
 	
-	public synchronized boolean commit(int transaction_id) throws InvalidTransactionException
+	public synchronized boolean commit(int transaction_id) throws InvalidTransactionException, TransactionAbortedException
 	{
-		boolean return_value = transaction_table.get("" + transaction_id).commit();
+		Transaction t = transaction_table.get("" + transaction_id);
+		if (t == null)
+		{
+			throw new TransactionAbortedException();
+		}
+		boolean return_value = t.commit();
 		transaction_table.remove("" + transaction_id);
+		scheduledFutures.get("" + transaction_id).cancel(false);
+		scheduledFutures.get("" + transaction_id).cancel(false);
+		scheduledFutures.remove("" + transaction_id);
 		return return_value;
 	}
 	
-	public void abort(int transaction_id)
+	public void abort(int transaction_id) throws TransactionAbortedException
 	{
-		transaction_table.get("" + transaction_id).abort();
+		Transaction t = transaction_table.get("" + transaction_id);
+		if (t == null)
+		{
+			throw new TransactionAbortedException();
+		}
+		t.abort();
 		transaction_table.remove("" + transaction_id);
+		scheduledFutures.get("" + transaction_id).cancel(false);
+		scheduledFutures.remove("" + transaction_id);
 	}
 	
 	/**
@@ -85,10 +118,5 @@ public class TransactionManager {
 	public String addOperationStringReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
 		return transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
-	}
-	
-	public void enlist()
-	{
-		
 	}
 }

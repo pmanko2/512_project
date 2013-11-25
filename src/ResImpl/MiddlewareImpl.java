@@ -63,7 +63,7 @@ public class MiddlewareImpl implements ResourceManager {
          * RM SERVERS
          */
         String flights_server = "lab2-1.cs.mcgill.ca";
-        String cars_server = "lab2-3.cs.mcgill.ca";        
+        String cars_server = "lab2-5.cs.mcgill.ca";        
         String rooms_server = "lab2-4.cs.mcgill.ca";
         
         int rm_port = 7707;
@@ -251,8 +251,9 @@ public class MiddlewareImpl implements ResourceManager {
     
     /**
      * Commit transaction with id transaction_id
+     * @throws TransactionAbortedException 
      */
-    public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException
+    public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
     	return tm.commit(transaction_id);
     }
@@ -276,8 +277,9 @@ public class MiddlewareImpl implements ResourceManager {
     
     /**
      * Abort transaction with id transaction_id
+     * @throws TransactionAbortedException 
      */
-    public void abort(int transaction_id) throws RemoteException, InvalidTransactionException
+    public void abort(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
     	tm.abort(transaction_id);
     }

@@ -598,7 +598,6 @@ public class ResourceManagerImpl implements ResourceManager
 	public boolean addCars(int id, String location, int count, int price)
         throws RemoteException
     {
-		//TODO update to check temp file first before new one
         Trace.info("RM::addCars(" + id + ", " + location + ", " + count + ", $" + price + ") called" );
         Car curObj;
         if ((curObj = (Car) readNonCommittedData( id ))==null)

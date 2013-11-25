@@ -367,6 +367,9 @@ public class Operation {
 			e.printStackTrace();
 		} catch (RemoteException e) {
 			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} 
 		return false;
 	}
@@ -388,6 +391,9 @@ public class Operation {
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (TransactionAbortedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -9,6 +9,7 @@ import javax.transaction.InvalidTransactionException;
 
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
+import TransactionManager.TransactionAbortedException;
 
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -32,10 +33,10 @@ public interface ResourceManager extends Remote
 	throws RemoteException;
 	
 	public boolean commit(int transaction_id)
-	throws RemoteException, InvalidTransactionException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
 	public void abort(int transaction_id)
-	throws RemoteException, InvalidTransactionException;
+	throws RemoteException, InvalidTransactionException, TransactionAbortedException;
 	
     /* Add seats to a flight.  In general this will be used to create a new
      * flight, but it should be possible to add seats to an existing flight.
