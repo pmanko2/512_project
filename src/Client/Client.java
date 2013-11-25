@@ -750,7 +750,8 @@ public class Client
 			} 
 	        catch (NullPointerException e)
 	        {
-	        	System.out.println("The transaction didn't exist serverside.");
+	        	System.out.println("The transaction didn't exist serverside. "
+	        			+ "This likely means that it was aborted by the server. Please try again.");
 	        	user_said_start = false;
 	        }
 	        catch (RemoteException e) 
