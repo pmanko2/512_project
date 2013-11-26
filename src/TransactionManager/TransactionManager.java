@@ -23,6 +23,10 @@ import ResInterface.ResourceManager;
  */
 public class TransactionManager implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2654814320951132999L;
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
 	//TODO Write transaction_table to disk
