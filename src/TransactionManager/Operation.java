@@ -403,8 +403,8 @@ public class Operation {
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			Trace.info("Could not connect to RM on abort. RM has crashed. Could not Abort. ABORT ABORT ABORT");
-			e.printStackTrace();
+			Trace.info("Could not connect to RM on abort. RM has crashed. Could not Abort.");
+			//e.printStackTrace();
 		} catch (TransactionAbortedException e) {
 			e.printStackTrace();
 		}
