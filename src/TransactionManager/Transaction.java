@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -177,4 +178,16 @@ public class Transaction {
 		}
 		lm.UnlockAll(TRANSACTION_ID);
 	}
+	
+	public void crash(String which) throws RemoteException
+	{
+		for(Operation o : operations)
+		{	
+			if(o.getRM().getName().equals(which))
+			{
+				o.getRM().crash(which);
+			}
+		}
+	}
+
 }
