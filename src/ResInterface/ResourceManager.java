@@ -189,4 +189,7 @@ public interface ResourceManager extends Remote
 	
 	public String getName()
 	throws RemoteException;
+	
+	public void crash(String which)
+	throws RemoteException;
 }

@@ -46,6 +46,9 @@ public class MiddlewareImpl implements ResourceManager {
 	protected static RMHashtable m_itemHT = new RMHashtable();
 	private static RMHashtable non_committed_items = new RMHashtable();
 	private static RMHashtable abort_items = new RMHashtable();
+	
+	private static int port;
+	private static String registry_name;
 
 	/**
 	 * Middleware takes care of all reservations - this is due to the inseparability of the 
@@ -61,7 +64,8 @@ public class MiddlewareImpl implements ResourceManager {
         /**
          * Creating our own RMI registry, global one isn't working
          */
-        int port = 8807;
+        port = 8807;
+        registry_name = "group_7_middle";
         
         /**
          * RM SERVERS
@@ -192,7 +196,7 @@ public class MiddlewareImpl implements ResourceManager {
             // Bind the remote object's stub in the registry
             //Registry registryMiddle = LocateRegistry.getRegistry(port);
             Registry registryMiddle = LocateRegistry.createRegistry(port);
-            registryMiddle.rebind("group_7_middle", mw);
+            registryMiddle.rebind(registry_name, mw);
 
             System.err.println("Server ready");
             
@@ -312,34 +316,6 @@ public class MiddlewareImpl implements ResourceManager {
     	flushToDisk();
     	return;
     }   
-    
-    public boolean crash(String which)
-    {
-    	try 
-    	{
-        	if(which.equals("cars"))
-        	{
-        		return cars_rm.selfDestruct();
-        	}
-        	else if(which.equals("flights"))
-        	{
-        		return flights_rm.selfDestruct();
-        	}
-        	else if(which.equals("rooms"))
-        	{
-        		return rooms_rm.selfDestruct();
-        	}
-        	else
-        	{
-        		return this.selfDestruct();
-        	}
-    	}
-    	catch (RemoteException e)
-    	{
-    		e.printStackTrace();
-        	return false;
-    	}
-    }
     
     /**
      * This method is called whenever something is committed/aborted in order to flush changes to disk; 
@@ -965,19 +941,6 @@ public class MiddlewareImpl implements ResourceManager {
 		//returns true if transaction was able to acquire all locks necessary for this operation
 		boolean toReturn = tm.addOperation(id, this, OP_CODE.RESERVE_FLIGHT, args, keys);
 		
-		//TODO to be removed if something other than this is found to work
-		
-		//must also create operation to query flight to ensure changes in counts are written to disk
-		//upon commit of reservation in MW
-		HashMap<String, Object> args2 = new HashMap<String, Object>();
-		args2.put("key", Flight.getKey(flightNumber));
-		args2.put("flightNum", flightNumber);
-		
-		ArrayList<String> keys2 = new ArrayList<String>();
-		keys2.add((String)args2.get("key"));
-		
-		tm.addOperationIntReturn(id, flights_rm, OP_CODE.QUERY_FLIGHTS, args2, keys2);
-		
 		return toReturn;
 	}
 	
@@ -1146,6 +1109,48 @@ public class MiddlewareImpl implements ResourceManager {
 		
 	}
 	
+	/**
+	 * This method simulates a crash either in an RM or in this Middleware
+	 */
+	public void crash(String which) throws RemoteException 
+	{
+		if (which.equals("flights"))
+		{
+			flights_rm.crash(which);
+		}
+		else if (which.equals("cars"))
+		{
+			cars_rm.crash(which);
+		}
+		else if (which.equals("hotels"))
+		{
+			rooms_rm.crash(which);
+		}
+		//if it's not any of the above, it must be this one
+		else
+		{
+			try {
+				//unregister this RM from the registry
+				Naming.unbind("//localhost:" + port + "/" + registry_name);
+				
+				//Unexport; this will also remove this RM from the RMI runtime.
+				UnicastRemoteObject.unexportObject(this, true);
+				
+				Trace.info("Simulating middleware crash...");
+							
+				
+			} catch (NotBoundException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	/**
+	 * This method shuts down the middleware cleanly
+	 */
 	public void shutdown() throws RemoteException
 	{
 		//TODO should we abort all transactions upon shutdown?
@@ -1155,8 +1160,8 @@ public class MiddlewareImpl implements ResourceManager {
 		flushToDisk();
 		try {
 			//unregister this RM from the registry
-			Naming.unbind("localhost");
-			
+			Naming.unbind("//localhost:" + port + "/" + registry_name);
+
 			//Unexport; this will also remove this RM from the RMI runtime.
 			UnicastRemoteObject.unexportObject(this, true);
 			

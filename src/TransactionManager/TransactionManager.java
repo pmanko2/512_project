@@ -21,8 +21,12 @@ import ResInterface.ResourceManager;
  * @author nic
  *
  */
-public class TransactionManager implements Serializable{
+public class TransactionManager implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2654814320951132999L;
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
 	//TODO Write transaction_table to disk
@@ -41,7 +45,7 @@ public class TransactionManager implements Serializable{
 		//TODO need to shut this down on exit
 		scheduler = Executors.newScheduledThreadPool(1000);
 		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
-		secondsToLive = 60;
+		secondsToLive = 300;
 	}
 	
 	/**

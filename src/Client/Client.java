@@ -728,7 +728,27 @@ public class Client
 	            	break;
 	            case 26:
 	            	rm.shutdown();
+	                System.out.println("Quitting client.");
+	                System.exit(1);
 	                break;
+	            case 27:
+	                if(arguments.size()!=2){
+		                obj.wrongNumber();
+		                break;
+	                }
+    	            String serverToCrash = obj.getString(arguments.elementAt(1));
+    	            //make sure string is a valid option
+    	            if (!serverToCrash.equals("flights") && !serverToCrash.equals("cars")
+    	            		&& !serverToCrash.equals("hotels") && !serverToCrash.equals("middleware")) 
+    	            {
+    	            	System.out.println("\"" + serverToCrash + "\" isn't a valid option. Please try again.");
+    	            	break;
+    	            }
+    	            //send request
+    	            rm.crash(serverToCrash);
+    	       
+	            	break;
+	            	
 	            default:
 	                System.out.println("The interface does not support this command.");
 	                break;
@@ -876,6 +896,8 @@ public class Client
     	return 25;
     else if (argument.compareToIgnoreCase("shutdown")==0)
     	return 26;
+    else if (argument.compareToIgnoreCase("crash")==0)
+    	return 27;
     else
         return 666;
 
@@ -891,7 +913,7 @@ public class Client
     System.out.println("deletecustomer\nqueryflight\nquerycar\nqueryroom\nquerycustomer");
     System.out.println("queryflightprice\nquerycarprice\nqueryroomprice");
     System.out.println("reserveflight\nreservecar\nreserveroom\nitinerary");
-    System.out.println("nquit\nshutdown");
+    System.out.println("nquit\nshutdown\ncrash");
     System.out.println("\ntype help, <commandname> for detailed info(NOTE the use of comma).");
     }
 
@@ -1095,8 +1117,15 @@ public class Client
         	break;
 
         case 26:
-        	System.out.println("Shuts down servers - currently not implemented, will"
-        			+ " be added in next deliverable.");
+        	System.out.println("Shuts down servers (RM and MW) and then quits the client. This"
+        			+ "call assumes that it will not be detrimental to kill all these processes"
+        			+ "immediately.");
+        	break;
+        	
+        case 27:
+        	System.out.println("Simulates a crash in a particular server.\n Usage: crash, [name]"
+        			+ "where name can be either flights, cars, hotels, or middleware. Note that"
+        			+ "middleware contains the transaction manager/coordinator.");
         	break;
         default:
 	        System.out.println(command);
