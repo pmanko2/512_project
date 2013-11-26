@@ -259,7 +259,7 @@ public class MiddlewareImpl implements ResourceManager {
      */
     public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
-    	return tm.commit(transaction_id);
+    	return tm.prepare(transaction_id);
     }
 
     /**
