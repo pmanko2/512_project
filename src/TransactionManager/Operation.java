@@ -460,5 +460,10 @@ public class Operation {
 		throw new RMCrashException();
 	}
 	
+	public ResourceManager getRM() throws RemoteException
+	{
+		return this.rm;
+	}
+	
 	
 }

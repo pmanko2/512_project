@@ -109,6 +109,7 @@ public class TransactionManager implements Serializable {
 		if(allYes)
 		{
 			Trace.info("Voting process returned all YES. Committing transaction");
+			crash("flights", transaction_table.get("" + transactionID));
 			return this.commit(transactionID);
 		}
 		else
@@ -143,5 +144,10 @@ public class TransactionManager implements Serializable {
 		String to_return = transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
 		middleware.flushToDisk();
 		return to_return;
+	}
+	
+	private void crash(String which, Transaction transaction) throws RemoteException
+	{
+		transaction.crash(which);
 	}
 }
