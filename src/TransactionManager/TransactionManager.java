@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import ResInterface.ResourceManager;
  * @author nic
  *
  */
-public class TransactionManager {
+public class TransactionManager implements Serializable{
 
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
@@ -95,8 +96,17 @@ public class TransactionManager {
 	 */
 	public boolean prepare(int transactionID) throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
-		Transaction toVote = transaction_table.get("" + transactionID);	
-		return true;
+		boolean allYes = transaction_table.get("" + transactionID).startVotingProcess();
+		
+		if(allYes)
+		{
+			return this.commit(transactionID);
+		}
+		else
+		{
+			this.abort(transactionID);
+			return false;
+		}
 	}
 	
 	/**

@@ -27,6 +27,7 @@ import ResInterface.ResourceManager;
 import TransactionManager.OP_CODE;
 import TransactionManager.TransactionAbortedException;
 import TransactionManager.TransactionManager;
+import TransactionManager.Vote;
 
 public class MiddlewareImpl implements ResourceManager {
 	
@@ -1172,6 +1173,26 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean selfDestruct() throws RemoteException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public Vote vote(int operationID, OP_CODE code) 
+	{
+		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		
+		boolean queryMethod = code.equals(OP_CODE.QUERY_CAR_PRICE) || code.equals(OP_CODE.QUERY_CARS) 
+				|| code.equals(OP_CODE.QUERY_CUSTOMER_INFO) || code.equals(OP_CODE.QUERY_FLIGHT_PRICE) 
+				|| code.equals(OP_CODE.QUERY_FLIGHTS)  || code.equals(OP_CODE.QUERY_ROOM_PRICE) 
+				|| code.equals(OP_CODE.QUERY_ROOMS);
+		
+		if(!voteYes && queryMethod)
+			voteYes = true;
+		
+		String vote = ((voteYes) ? "yes" : "no");
+		
+		Trace.info(" Middleware RM voted " + vote + " on Operation " + operationID);
+		
+		return new Vote(vote, "middleware");
 	}
 
 

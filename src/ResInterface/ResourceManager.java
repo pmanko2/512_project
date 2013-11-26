@@ -9,7 +9,10 @@ import javax.transaction.InvalidTransactionException;
 
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
+import TransactionManager.OP_CODE;
+import TransactionManager.Vote;
 import TransactionManager.TransactionAbortedException;
+
 
 /** 
  * Simplified version from CSE 593 Univ. of Washington
@@ -180,4 +183,6 @@ public interface ResourceManager extends Remote
 	
 	public void flushToDisk() 
 	throws RemoteException;
+	
+	public Vote vote(int operationID, OP_CODE code);
 }

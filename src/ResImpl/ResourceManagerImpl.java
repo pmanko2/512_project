@@ -12,6 +12,8 @@
 package ResImpl;
 
 import ResInterface.*;
+import TransactionManager.OP_CODE;
+import TransactionManager.Vote;
 
 import java.util.*;
 import java.io.File;
@@ -877,6 +879,28 @@ public class ResourceManagerImpl implements ResourceManager
 		} catch (NotBoundException e) {
 			e.printStackTrace();
 		}
+	}
+
+	// check if operation has any temporary data, if it does vote yes otherwise vote no
+	@Override
+	public Vote vote(int operationID, OP_CODE code) 
+	{
+		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
+		
+		boolean queryMethod = code.equals(OP_CODE.QUERY_CAR_PRICE) || code.equals(OP_CODE.QUERY_CARS) 
+				|| code.equals(OP_CODE.QUERY_CUSTOMER_INFO) || code.equals(OP_CODE.QUERY_FLIGHT_PRICE) 
+				|| code.equals(OP_CODE.QUERY_FLIGHTS)  || code.equals(OP_CODE.QUERY_ROOM_PRICE) 
+				|| code.equals(OP_CODE.QUERY_ROOMS);
+		
+		if(!voteYes && queryMethod)
+			voteYes = true;
+		
+		String vote = ((voteYes) ? "yes" : "no");
+		
+		Trace.info(rm_name + " RM voted " + vote + " on Operation " + operationID);
+		
+		return new Vote(vote, rm_name);
+		
 	}
 }
 

@@ -69,8 +69,7 @@ public class Operation {
 				
 					//acquire write lock
 					lm.Lock(transaction_id, (String)arguments.get("key"), TrxnObj.WRITE);
-					keys.add((String)arguments.get("key"));
-					
+					keys.add((String)arguments.get("key"));				
 					//call rm to create a non-committed RMItem
 					return rm.addFlight(OP_ID, (Integer)arguments.get("flightNum"), (Integer)arguments.get("flightSeats"), (Integer)arguments.get("flightPrice"));
 
@@ -423,5 +422,14 @@ public class Operation {
 	public int getOpID()
 	{
 		return OP_ID;
+	}
+	
+	/**
+	 * Two phase commit voting protocol. Each operation votes whether it wants to commit or not
+	 * @return right now always vote yes and return
+	 */
+	public Vote requestVoteFromRM()
+	{
+		return rm.vote(this.OP_ID, this.operation);
 	}
 }
