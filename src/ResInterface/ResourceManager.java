@@ -186,4 +186,7 @@ public interface ResourceManager extends Remote
 	
 	public Vote vote(int operationID, OP_CODE code)
 	throws RemoteException;
+	
+	public String getName()
+	throws RemoteException;
 }

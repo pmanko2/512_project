@@ -147,10 +147,17 @@ public class Transaction {
 		// go through all operation votes. if we have a no vote, return false
 		for(Operation voter : operations)
 		{
-			Vote currentVote = voter.requestVoteFromRM();
-			
-			if(currentVote == Vote.NO)
+			Vote currentVote;
+			try
+			{
+				currentVote = voter.requestVoteFromRM();
+				
+				if(currentVote == Vote.NO)
+					return false;
+			} catch (RMCrashException e){
+				// if we get an exception indicating an rm has crashed, we abort transaction
 				return false;
+			}
 		}
 		
 		return true;

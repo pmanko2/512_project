@@ -4,8 +4,13 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -15,6 +20,7 @@ import LockManager.TrxnObj;
 import ResImpl.Customer;
 import ResImpl.MiddlewareImpl;
 import ResImpl.RMHashtable;
+import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 public class Operation {
@@ -27,6 +33,8 @@ public class Operation {
 	private static int operation_count = 0;
 	private final int OP_ID;
 	private ArrayList<String> keys;
+	private final ScheduledExecutorService scheduler;
+	private Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l)
 	{
@@ -38,6 +46,8 @@ public class Operation {
 		OP_ID = operation_count;
 		operation_count++;
 		keys = new ArrayList<String>();
+		scheduler = Executors.newScheduledThreadPool(1000);
+		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l, int specified_id)
@@ -49,6 +59,8 @@ public class Operation {
 		lm = l;
 		OP_ID = specified_id;
 		keys = new ArrayList<String>();
+		scheduler = Executors.newScheduledThreadPool(1000);
+		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
 	/**
@@ -428,14 +440,24 @@ public class Operation {
 	 * Two phase commit voting protocol. Each operation votes whether it wants to commit or not
 	 * @return right now always vote yes and return
 	 */
-	public Vote requestVoteFromRM()
+	public Vote requestVoteFromRM() throws RMCrashException
 	{
 		try {
+			
+			/*TimeoutTimer rmTimeout = new TimeoutTimer(rm.getName(), this);
+			ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(rmTimeout, 5, TimeUnit.SECONDS);
+			scheduledFutures.put("" + OP_ID, scheduledFuture);*/
 			return rm.vote(this.OP_ID, this.operation);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			Trace.error("Remote Exception in RM. Could not connect to RM");
+			return Vote.NO;
 		}
 	}
+	
+	public void indicateRMTimeout() throws RMCrashException
+	{
+		throw new RMCrashException();
+	}
+	
+	
 }

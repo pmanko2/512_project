@@ -902,6 +902,11 @@ public class ResourceManagerImpl implements ResourceManager
 		return vote;
 		
 	}
+
+	@Override
+	public String getName() throws RemoteException {
+		return ResourceManagerImpl.rm_name;
+	}
 }
 
 

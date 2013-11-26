@@ -1195,5 +1195,10 @@ public class MiddlewareImpl implements ResourceManager {
 		return vote;
 	}
 
+	@Override
+	public String getName() throws RemoteException {
+		return "middleware";
+	}
+
 
 }
