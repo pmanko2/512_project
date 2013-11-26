@@ -450,7 +450,7 @@ public class Operation {
 			return rm.vote(this.OP_ID, this.operation);
 		} catch (RemoteException e) {
 			Trace.error("Remote Exception in RM. Could not connect to RM");
-			return Vote.NO;
+			throw new RMCrashException();
 		}
 	}
 	

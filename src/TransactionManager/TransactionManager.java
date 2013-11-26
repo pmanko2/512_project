@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.InvalidTransactionException;
 
 import LockManager.LockManager;
+import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 /**
@@ -104,10 +105,12 @@ public class TransactionManager implements Serializable {
 		
 		if(allYes)
 		{
+			Trace.info("Voting process returned all YES. Committing transaction");
 			return this.commit(transactionID);
 		}
 		else
 		{
+			Trace.info("Voting process returned at least one NO. Aborting transaction");
 			this.abort(transactionID);
 			return false;
 		}

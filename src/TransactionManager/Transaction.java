@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import LockManager.LockManager;
+import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
 /**
@@ -156,6 +157,7 @@ public class Transaction {
 					return false;
 			} catch (RMCrashException e){
 				// if we get an exception indicating an rm has crashed, we abort transaction
+				Trace.info("RM has crashed. Need to abort transaction. Returning false to TransactionManager");
 				return false;
 			}
 		}
