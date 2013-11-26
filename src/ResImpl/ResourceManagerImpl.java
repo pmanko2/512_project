@@ -877,7 +877,7 @@ public class ResourceManagerImpl implements ResourceManager
 				UnicastRemoteObject.unexportObject(this, true);
 				
 				Trace.info("Simulating " + rm_name + " resource manager crash...");
-							
+				System.exit(0);
 				
 			} catch (NotBoundException e) {
 				e.printStackTrace();
@@ -913,7 +913,7 @@ public class ResourceManagerImpl implements ResourceManager
 
 	// check if operation has any temporary data, if it does vote yes otherwise vote no
 	@Override
-	public Vote vote(int operationID, OP_CODE code) 
+	public Vote vote(int operationID, OP_CODE code) throws RemoteException 
 	{
 		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
 		
@@ -925,9 +925,13 @@ public class ResourceManagerImpl implements ResourceManager
 		if(!voteYes && queryMethod)
 			voteYes = true;
 		
+		//TODO	crash("flights");
+		
 		Vote vote = ((voteYes) ? Vote.YES : Vote.NO);
 		
 		Trace.info(rm_name + " RM voted " + vote + " on Operation " + operationID);
+		
+		flushToDisk();
 		
 		return vote;
 		

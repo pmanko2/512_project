@@ -714,10 +714,18 @@ public class Client
 	            	break;
 	            	
 	            case 24:
-    				rm.commit(CURRENT_TRXN);
+    				boolean result = rm.commit(CURRENT_TRXN);
     				user_said_start = false;
-    				System.out.println("All changes since last commit have been committed."
-    						+ " To start a new transaction, type start.");
+    				if (result)
+    				{
+    					System.out.println("All changes since last commit have been committed."
+    					    						+ " To start a new transaction, type start.");
+    				}
+    				else
+    				{
+    					System.out.println("Something went wrong and this transaction was aborted. "
+    							+ "Please try again.");
+    				}
 	            	break;
 	            	
 	            case 25:

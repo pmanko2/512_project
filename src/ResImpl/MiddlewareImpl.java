@@ -72,7 +72,7 @@ public class MiddlewareImpl implements ResourceManager {
          */
         String flights_server = "lab2-1.cs.mcgill.ca";
         String cars_server = "lab2-5.cs.mcgill.ca";        
-        String rooms_server = "lab2-4.cs.mcgill.ca";
+        String rooms_server = "lab2-7.cs.mcgill.ca";
         
         int rm_port = 7707;
 
