@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -402,9 +403,9 @@ public class Operation {
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
+			Trace.info("Could not connect to RM on abort. RM has crashed. Could not Abort. ABORT ABORT ABORT");
 			e.printStackTrace();
 		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
