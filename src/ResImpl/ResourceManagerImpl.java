@@ -879,6 +879,8 @@ public class ResourceManagerImpl implements ResourceManager
 		
 		String vote = ((voteYes) ? "yes" : "no");
 		
+		Trace.info(rm_name + " RM voted " + vote + " on Operation " + operationID);
+		
 		return new Vote(vote, rm_name);
 		
 	}

@@ -1173,6 +1173,8 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		String vote = ((voteYes) ? "yes" : "no");
 		
+		Trace.info(" Middleware RM voted " + vote + " on Operation " + operationID);
+		
 		return new Vote(vote, "middleware");
 	}
 
