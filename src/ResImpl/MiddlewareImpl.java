@@ -317,34 +317,6 @@ public class MiddlewareImpl implements ResourceManager {
     	return;
     }   
     
-    public boolean crash(String which)
-    {
-    	try 
-    	{
-        	if(which.equals("cars"))
-        	{
-        		return cars_rm.selfDestruct();
-        	}
-        	else if(which.equals("flights"))
-        	{
-        		return flights_rm.selfDestruct();
-        	}
-        	else if(which.equals("rooms"))
-        	{
-        		return rooms_rm.selfDestruct();
-        	}
-        	else
-        	{
-        		return this.selfDestruct();
-        	}
-    	}
-    	catch (RemoteException e)
-    	{
-    		e.printStackTrace();
-        	return false;
-    	}
-    }
-    
     /**
      * This method is called whenever something is committed/aborted in order to flush changes to disk; 
      */
@@ -1137,6 +1109,48 @@ public class MiddlewareImpl implements ResourceManager {
 		
 	}
 	
+	/**
+	 * This method simulates a crash either in an RM or in this Middleware
+	 */
+	public void crash(String which) throws RemoteException 
+	{
+		if (which.equals("flights"))
+		{
+			flights_rm.crash(which);
+		}
+		else if (which.equals("cars"))
+		{
+			cars_rm.crash(which);
+		}
+		else if (which.equals("hotels"))
+		{
+			rooms_rm.crash(which);
+		}
+		//if it's not any of the above, it must be this one
+		else
+		{
+			try {
+				//unregister this RM from the registry
+				Naming.unbind("//localhost:" + port + "/" + registry_name);
+				
+				//Unexport; this will also remove this RM from the RMI runtime.
+				UnicastRemoteObject.unexportObject(this, true);
+				
+				Trace.info("Simulating middleware crash...");
+							
+				
+			} catch (NotBoundException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	/**
+	 * This method shuts down the middleware cleanly
+	 */
 	public void shutdown() throws RemoteException
 	{
 		//TODO should we abort all transactions upon shutdown?

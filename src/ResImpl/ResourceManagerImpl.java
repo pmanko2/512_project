@@ -852,20 +852,46 @@ public class ResourceManagerImpl implements ResourceManager
 
 	@Override
 	public int newCustomerExecute(int op_id, int cid) throws RemoteException {
-		// TODO Auto-generated method stub
+		// TODO do we need this method?
 		return 0;
 	}
 
 	@Override
 	public boolean selfDestruct() throws RemoteException {
-		// TODO Auto-generated method stub
+		//TODO probably should just delete this
 		return false;
 	}
 
 	/**
+	 * This method simulates a crash in this RM
+	 */
+	public void crash(String which) throws RemoteException 
+	{
+		if (which.equals(rm_name))
+		{
+			try {
+				//unregister this RM from the registry
+				Naming.unbind("//localhost:" + port + "/" + registry_name);
+				
+				//Unexport; this will also remove this RM from the RMI runtime.
+				UnicastRemoteObject.unexportObject(this, true);
+				
+				Trace.info("Simulating " + rm_name + " resource manager crash...");
+							
+				
+			} catch (NotBoundException e) {
+				e.printStackTrace();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
 	 * This method cleanly shuts down this RM
 	 */
-	public void shutdown() throws RemoteException {
+	public void shutdown() throws RemoteException 
+	{
 		flushToDisk();
 
 		try {
@@ -881,7 +907,6 @@ public class ResourceManagerImpl implements ResourceManager
 		} catch (NotBoundException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
