@@ -10,6 +10,7 @@ MIDDLEWARE_HOST="teaching.cs.mcgill.ca"
 USERNAME=nwebst1
 
 #kill processes started on each machine
+<<COMMENT
 cleanup()
 {
     CLEANUP_SCRIPT="ps -u nwebst1 | grep -ie java | awk '{print \$1}' | xargs kill -9"
@@ -28,13 +29,13 @@ cleanup()
     printf "CLEANUP COMPLETE"
     printf "*************************\n\n\n"
 }
-
+COMMENT
 control_c()
 {
     printf "\n*************************"
     printf "SHUTTING DOWN"
     printf "*************************\n"
-    cleanup
+#    cleanup
     exit $?
 }
 

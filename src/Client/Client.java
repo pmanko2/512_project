@@ -728,6 +728,8 @@ public class Client
 	            	break;
 	            case 26:
 	            	rm.shutdown();
+	                System.out.println("Quitting client.");
+	                System.exit(1);
 	                break;
 	            default:
 	                System.out.println("The interface does not support this command.");

@@ -42,11 +42,13 @@ public class ResourceManagerImpl implements ResourceManager
 	private static RMHashtable non_committed_items = new RMHashtable();
 	private static RMHashtable abort_items = new RMHashtable();
 	private static String rm_name;
+	private static final String registry_name = "group_7_RM";
+	private static int port;
 
     public static void main(String args[]) {
         // Figure out where server is running
         String server = "localhost";
-        int port = 7707;
+        port = 7707;
 
         if (args.length == 1) {
         	rm_name = args[0];
@@ -72,8 +74,8 @@ public class ResourceManagerImpl implements ResourceManager
             
             // Bind the remote object's stub in the registry
             Registry registry = LocateRegistry.createRegistry(port);
-            registry.rebind("group_7_RM", rm);
-            
+            registry.rebind(registry_name, rm);
+
             //read in any existing data
             System.out.println("Reading in existing data...");
             String masterPath = "/home/2011/nwebst1/comp512/data/" + rm_name + "/master_record.loc";
@@ -865,18 +867,21 @@ public class ResourceManagerImpl implements ResourceManager
 	 */
 	public void shutdown() throws RemoteException {
 		flushToDisk();
+
 		try {
 			//unregister this RM from the registry
-			Naming.unbind("localhost");
+			Naming.unbind("//localhost:" + port + "/" + registry_name);
 			
 			//Unexport; this will also remove this RM from the RMI runtime.
 			UnicastRemoteObject.unexportObject(this, true);
 			
 			Trace.info("Shutting down " + rm_name + " Resource Manager.");
 						
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			
 		} catch (NotBoundException e) {
+			e.printStackTrace();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
