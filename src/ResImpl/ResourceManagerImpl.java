@@ -22,8 +22,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.MalformedURLException;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RMISecurityManager;
@@ -857,10 +860,25 @@ public class ResourceManagerImpl implements ResourceManager
 		return false;
 	}
 
-	@Override
+	/**
+	 * This method cleanly shuts down this RM
+	 */
 	public void shutdown() throws RemoteException {
 		flushToDisk();
-		System.exit(0);
+		try {
+			//unregister this RM from the registry
+			Naming.unbind("localhost");
+			
+			//Unexport; this will also remove this RM from the RMI runtime.
+			UnicastRemoteObject.unexportObject(this, true);
+			
+			Trace.info("Shutting down " + rm_name + " Resource Manager.");
+						
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// check if operation has any temporary data, if it does vote yes otherwise vote no

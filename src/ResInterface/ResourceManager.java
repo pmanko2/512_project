@@ -184,5 +184,6 @@ public interface ResourceManager extends Remote
 	public void flushToDisk() 
 	throws RemoteException;
 	
-	public Vote vote(int operationID, OP_CODE code);
+	public Vote vote(int operationID, OP_CODE code)
+	throws RemoteException;
 }

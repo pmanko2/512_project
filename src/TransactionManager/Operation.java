@@ -430,6 +430,12 @@ public class Operation {
 	 */
 	public Vote requestVoteFromRM()
 	{
-		return rm.vote(this.OP_ID, this.operation);
+		try {
+			return rm.vote(this.OP_ID, this.operation);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 	}
 }

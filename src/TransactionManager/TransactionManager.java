@@ -72,7 +72,6 @@ public class TransactionManager implements Serializable{
 		boolean return_value = t.commit();
 		transaction_table.remove("" + transaction_id);
 		scheduledFutures.get("" + transaction_id).cancel(false);
-		scheduledFutures.get("" + transaction_id).cancel(false);
 		scheduledFutures.remove("" + transaction_id);
 		return return_value;
 	}
