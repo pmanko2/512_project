@@ -877,11 +877,11 @@ public class ResourceManagerImpl implements ResourceManager
 		if(!voteYes && queryMethod)
 			voteYes = true;
 		
-		String vote = ((voteYes) ? "yes" : "no");
+		Vote vote = ((voteYes) ? Vote.YES : Vote.NO);
 		
 		Trace.info(rm_name + " RM voted " + vote + " on Operation " + operationID);
 		
-		return new Vote(vote, rm_name);
+		return vote;
 		
 	}
 }

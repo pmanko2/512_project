@@ -149,7 +149,7 @@ public class Transaction {
 		{
 			Vote currentVote = voter.requestVoteFromRM();
 			
-			if(currentVote.getVote().equals("no"))
+			if(currentVote == Vote.NO)
 				return false;
 		}
 		
