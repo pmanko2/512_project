@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.InvalidTransactionException;
 
 import LockManager.LockManager;
+import ResImpl.MiddlewareImpl;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -33,11 +34,12 @@ public class TransactionManager implements Serializable {
 	//TODO Write transaction_table to disk
 	private static int transaction_id_counter = 0;
 	private static LockManager lm;
-	private final ScheduledExecutorService scheduler;
-	private Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
+	private final transient ScheduledExecutorService scheduler;
+	private transient Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	private long secondsToLive;
+	private MiddlewareImpl middleware;
 
-	public TransactionManager()
+	public TransactionManager(MiddlewareImpl mw)
 	{
 		transaction_table = new Hashtable<String, Transaction>();
 		lm = new LockManager();
@@ -59,6 +61,7 @@ public class TransactionManager implements Serializable {
 		int to_return = t.getID();
 		transaction_id_counter++;
 		transaction_table.put("" + to_return, t);
+		Trace.info("Transaction.start(): creating new transaction with ID: " + to_return);
 		
 		//start TIL timer for this transaction
 		TransactionTimer tt = new TransactionTimer(to_return, this);
@@ -123,16 +126,22 @@ public class TransactionManager implements Serializable {
 	 */
 	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
-		return transaction_table.get("" + transaction_id).addOperation(r, op, args, keys);
+		boolean to_return = transaction_table.get("" + transaction_id).addOperation(r, op, args, keys);
+		middleware.flushToDisk();
+		return to_return;
 	}
 	
 	public int addOperationIntReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
-		return transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args, keys);
+		int to_return = transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args, keys);
+		middleware.flushToDisk();
+		return to_return;
 	}
 
 	public String addOperationStringReturn(int transaction_id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
 	{
-		return transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
+		String to_return = transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
+		middleware.flushToDisk();
+		return to_return;
 	}
 }

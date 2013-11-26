@@ -147,11 +147,13 @@ public class MiddlewareImpl implements ResourceManager {
             	String filePathItems = masterRecordPath + "items_table.data";
             	String filePathCommit = masterRecordPath + "non_committed_items_table.data";
             	String filePathAbort = masterRecordPath + "abort_items_table.data";
+            	String filePathTM = masterRecordPath + "transaction_manager.data";
             	
             	//create file objects for these data files
             	File items_file = new File(filePathItems);
     	      	File commit_file = new File(filePathCommit);
     	      	File abort_file = new File(filePathAbort);
+    	      	File tm_file = new File(filePathTM);
     	      	
     	      	//load items data into memory
     	    	if(items_file.exists()){
@@ -182,6 +184,17 @@ public class MiddlewareImpl implements ResourceManager {
     	        	fis.close();
     	        	ois.close();
     	        }
+    	    	
+    	    	//load TM data into memory
+    	    	if (tm_file.exists())
+    	    	{
+    	    		fis = new FileInputStream(tm_file);
+    	    		ois = new ObjectInputStream(fis);
+    	    		
+    	    		tm = (TransactionManager) ois.readObject();
+    	    		fis.close();
+    	    		ois.close();
+    	    	}
             }
         	
         	
@@ -220,7 +233,7 @@ public class MiddlewareImpl implements ResourceManager {
             rooms_rm = (ResourceManager) registry_rooms.lookup("group_7_RM");
             
             //create the transactionmanager object
-            tm = new TransactionManager();
+            tm = new TransactionManager(obj);
             
             if(cars_rm!=null && flights_rm!=null && rooms_rm!=null)
             {
@@ -254,6 +267,7 @@ public class MiddlewareImpl implements ResourceManager {
    public int start() throws RemoteException
     {
 	   int return_value = tm.start();
+	  // flushToDisk();
 	   return return_value;
     }
     
@@ -263,7 +277,13 @@ public class MiddlewareImpl implements ResourceManager {
      */
     public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
-    	return tm.prepare(transaction_id);
+    	boolean to_return = tm.prepare(transaction_id);
+    	
+    	if (to_return)
+    	{
+    		flushToDisk();
+    	}
+    	return to_return;
     }
 
     /**
@@ -278,8 +298,6 @@ public class MiddlewareImpl implements ResourceManager {
         	non_committed_items.remove("" + op_id);
     	}
     	
-    	flushToDisk();
-    	
     	return true;
     }
     
@@ -290,6 +308,7 @@ public class MiddlewareImpl implements ResourceManager {
     public void abort(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
     	tm.abort(transaction_id);
+    	flushToDisk();
     }
     
     /**
@@ -313,7 +332,6 @@ public class MiddlewareImpl implements ResourceManager {
         	non_committed_items.remove(cust.getKey());
     	}
     	
-    	flushToDisk();
     	return;
     }   
     
@@ -362,11 +380,13 @@ public class MiddlewareImpl implements ResourceManager {
         	String filePathItems = dataPath + "items_table.data";
         	String filePathCommit = dataPath + "non_committed_items_table.data";
         	String filePathAbort = dataPath + "abort_items_table.data";
+        	String filePathTM = dataPath + "transaction_manager.data";
         	
         	//create file objects so that we can write data to disk
 	    	File items_file = new File(filePathItems);
 	    	File commit_file = new File(filePathCommit);
 	    	File abort_file = new File(filePathAbort);
+	    	File tm_file = new File(filePathTM);
 	    	
     		// if files don't exist, then create then
     		if (!items_file.exists()) {
@@ -380,6 +400,11 @@ public class MiddlewareImpl implements ResourceManager {
     		if (!abort_file.exists()) {
     			abort_file.getParentFile().mkdirs();
     			abort_file.createNewFile();
+    		}
+    		if (!tm_file.exists())
+    		{
+    			tm_file.getParentFile().mkdir();
+    			tm_file.createNewFile();
     		}
     		
         	//write "persistent" items to disk
@@ -400,6 +425,13 @@ public class MiddlewareImpl implements ResourceManager {
 	    	fos = new FileOutputStream(abort_file);
 	    	oos = new ObjectOutputStream(fos);
 			oos.writeObject(abort_items);
+			fos.close();
+			oos.close();
+			
+			//write TM data to disk
+			fos = new FileOutputStream(tm_file);
+			oos = new ObjectOutputStream(fos);
+			oos.writeObject(tm);
 			fos.close();
 			oos.close();
 			
