@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -1144,11 +1147,25 @@ public class MiddlewareImpl implements ResourceManager {
 	
 	public void shutdown() throws RemoteException
 	{
+		//TODO should we abort all transactions upon shutdown?
 		flights_rm.shutdown();
 		cars_rm.shutdown();
 		rooms_rm.shutdown();
 		flushToDisk();
-		System.exit(0);
+		try {
+			//unregister this RM from the registry
+			Naming.unbind("localhost");
+			
+			//Unexport; this will also remove this RM from the RMI runtime.
+			UnicastRemoteObject.unexportObject(this, true);
+			
+			Trace.info("Shutting down Middleware.");
+						
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
