@@ -951,8 +951,8 @@ public class ResourceManagerImpl implements ResourceManager
 	@Override
 	public void setCrashFlags(String which, CrashType type) throws RemoteException 
 	{
-		this.serverToCrash = which;
-		this.failType = type;
+		serverToCrash = which;
+		failType = type;
 		
 	}
 }

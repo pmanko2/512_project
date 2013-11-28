@@ -27,9 +27,9 @@ public class Transaction implements Serializable {
 	private final int TRANSACTION_ID;
 	//array list of operations this transaction is responsible for
 	private transient ArrayList<Operation> operations;
-	private LockManager lm;
-	private ResourceManager serverToCrash;
-	private CrashType type;
+	private transient LockManager lm;
+	private transient ResourceManager serverToCrash;
+	private transient CrashType type;
 	
 	public Transaction(int id, LockManager l)
 	{

@@ -18,7 +18,6 @@ import javax.transaction.InvalidTransactionException;
 
 import LockManager.LockManager;
 import ResImpl.CrashType;
-import ResImpl.MiddlewareImpl;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -203,11 +202,6 @@ public class TransactionManager {
 		} catch (RemoteException e){
 			e.printStackTrace();
 		}
-	}
-	
-	private void crash(String which, Transaction transaction) throws RemoteException
-	{
-		transaction.crash(which);
 	}
 	
 	/**
