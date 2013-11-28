@@ -1,6 +1,8 @@
 package TransactionManager;
 
-public enum OP_CODE
+import java.io.Serializable;
+
+public enum OP_CODE implements Serializable
 {
 	ADD_FLIGHT,
 	ADD_CARS,

@@ -707,11 +707,20 @@ public class Client
 	                break;
 	                
 	            case 23:
-    				CURRENT_TRXN = rm.start();
-    	        	user_said_start = true;
-    				System.out.println("A new transaction has been started. To commit changes at any "
-    						+ "point, type commit. To discard changes, type abort.");
-	            	break;
+	                if(arguments.size()==2){
+	    	            int idToUse = obj.getInt(arguments.elementAt(1));
+	    	            CURRENT_TRXN = idToUse;
+	    	            user_said_start = true;
+	    	            break;
+	                }
+	                else
+	                {
+	    				CURRENT_TRXN = rm.start();
+	    	        	user_said_start = true;
+	    				System.out.println("A new transaction has been started. To commit changes at any "
+	    						+ "point, type commit. To discard changes, type abort.");
+		            	break;	
+	                }
 	            	
 	            case 24:
     				boolean result = rm.commit(CURRENT_TRXN);
@@ -781,6 +790,17 @@ public class Client
 	        	System.out.println("The transaction didn't exist serverside. "
 	        			+ "This likely means that it was aborted by the server. Please try again.");
 	        	user_said_start = false;
+	        	//e.printStackTrace();
+	        	try {
+					rm.abort(CURRENT_TRXN);
+				} catch (InvalidTransactionException e1) {
+					e1.printStackTrace();
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				} catch (TransactionAbortedException e1)
+				{
+					System.out.println("\nConfirmation - this transaction was aborted by the server.");
+				}
 	        }
 	        catch (RemoteException e) 
 	        {

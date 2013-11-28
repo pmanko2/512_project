@@ -7,7 +7,7 @@ import java.util.Vector;
 @SuppressWarnings("static-access")
 public class LockManager
 {
-    public static final int READ = 0;
+	public static final int READ = 0;
     public static final int WRITE = 1;
     
     private static int TABLE_SIZE = 2039;
