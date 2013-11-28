@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.InvalidTransactionException;
 
 import LockManager.LockManager;
+import ResImpl.CrashType;
+import ResImpl.MiddlewareImpl;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
@@ -35,17 +37,27 @@ public class TransactionManager {
 	private static ScheduledExecutorService scheduler;
 	private static Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	private long secondsToLive;
+	
+	private CrashType crashType;
+	private ResourceManager serverToCrash;
+	private String crashServerName;
+
 	private static ResourceManager middleware;
 	//private static ResourceManager
 	private static ResourceManager flights;
 	private static ResourceManager cars;
 	private static ResourceManager hotels;
 
+
 	public TransactionManager(ResourceManager f, ResourceManager c,
 			ResourceManager h, ResourceManager mw)
 	{
 		transaction_table = new Hashtable<String, Transaction>();
 		lm = new LockManager();
+		
+		this.crashType = null;
+		this.serverToCrash = null;
+		this.crashServerName = null;
 		
 		//set up scheduler object
 		scheduler = Executors.newScheduledThreadPool(1000);
@@ -118,12 +130,28 @@ public class TransactionManager {
 	 */
 	public boolean prepare(int transactionID) throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
-		boolean allYes = transaction_table.get("" + transactionID).startVotingProcess();
+		if(crashType == CrashType.BEFORE_VOTE_REQUEST)
+			serverToCrash.crash(crashServerName);
+		
+		Transaction toCommit = transaction_table.get("" + transactionID);
+		toCommit.setCrashFlags(crashType, serverToCrash);
+		
+		boolean allYes = toCommit.startVotingProcess();
+		
+		// crash after voting but before decision
+		if(crashType == CrashType.TM_BEFORE_DECISION)
+			serverToCrash.crash(crashServerName);
 		
 		if(allYes)
 		{
 			Trace.info("Voting process returned all YES. Committing transaction");
-			//crash("flights", transaction_table.get("" + transactionID));
+
+			if(crashType == CrashType.AFTER_VOTE_RETURN_BEFORE_COMMIT_REQUEST)
+				serverToCrash.crash(crashServerName);
+			
+			if(crashType == CrashType.TM_BEFORE_DECISION_SENT)
+				serverToCrash.crash(crashServerName);
+
 			return this.commit(transactionID);
 		}
 		else
@@ -161,6 +189,20 @@ public class TransactionManager {
 		String to_return = transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
 		middleware.flushToDisk();
 		return to_return;
+	}
+	
+	public void setCrashFlags(ResourceManager toCrash, CrashType type, String serverName)
+	{
+		this.crashType = type;
+		this.serverToCrash = toCrash;
+		this.crashServerName = serverName;
+		
+		try
+		{
+			toCrash.setCrashFlags(serverName, type);
+		} catch (RemoteException e){
+			e.printStackTrace();
+		}
 	}
 	
 	private void crash(String which, Transaction transaction) throws RemoteException

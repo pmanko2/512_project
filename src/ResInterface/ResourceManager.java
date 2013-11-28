@@ -7,6 +7,7 @@ import java.util.*;
 
 import javax.transaction.InvalidTransactionException;
 
+import ResImpl.CrashType;
 import ResImpl.ReservableItem;
 import ResImpl.ReservedItem;
 import TransactionManager.OP_CODE;
@@ -190,6 +191,14 @@ public interface ResourceManager extends Remote
 	public void crash(String which)
 	throws RemoteException;
 	
+
+	public void setCrashFlags(String which, CrashType type)
+	throws RemoteException;
+	
+	/**
+	 * method used to rollback committed changes by an RM. Necessary when not all RMs of transaction commit properly
+	 * @throws RemoteException
+	 */
 	public void rollback()
 	throws RemoteException;
 }

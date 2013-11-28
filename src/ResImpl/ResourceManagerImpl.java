@@ -42,8 +42,14 @@ public class ResourceManagerImpl implements ResourceManager
 	private static String rm_name;
 	private static final String registry_name = "group_7_RM";
 	private static int port;
+	private static CrashType failType;
+	private static String serverToCrash;
 
     public static void main(String args[]) {
+    	
+    	failType = null;
+    	serverToCrash = null;
+    	
         // Figure out where server is running
         String server = "localhost";
         port = 7707;
@@ -920,7 +926,11 @@ public class ResourceManagerImpl implements ResourceManager
 		if(!voteYes && queryMethod)
 			voteYes = true;
 		
-		//TODO	crash("flights");
+		if(failType == CrashType.AFTER_REQUEST_BEFORE_VOTE_RETURN)
+		{
+			crash(serverToCrash);
+			//TODO have to shutdown following crash so that no votes are returned
+		}
 		
 		Vote vote = ((voteYes) ? Vote.YES : Vote.NO);
 		
@@ -935,6 +945,15 @@ public class ResourceManagerImpl implements ResourceManager
 	@Override
 	public String getName() throws RemoteException {
 		return ResourceManagerImpl.rm_name;
+	}
+
+
+	@Override
+	public void setCrashFlags(String which, CrashType type) throws RemoteException 
+	{
+		this.serverToCrash = which;
+		this.failType = type;
+		
 	}
 }
 

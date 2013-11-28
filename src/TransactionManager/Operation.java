@@ -371,7 +371,8 @@ public class Operation implements Serializable {
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			Trace.error("Did not receive commit confirmation from RM server. Server crashed. Returning false");
+			return false;
 		} catch (TransactionAbortedException e) {
 			e.printStackTrace();
 		} 
@@ -509,6 +510,11 @@ public class Operation implements Serializable {
 		return this.rm;
 	}
 	
+	public void rollback() throws RemoteException
+	{
+		rm.rollback();
+	}
+
 	public static void setOpCount(int count)
 	{
 		operation_count = count;
