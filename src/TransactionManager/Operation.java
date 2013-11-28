@@ -247,7 +247,9 @@ public class Operation implements Serializable {
 		catch (DeadlockException e)
 		{
 			e.printStackTrace();
-		} catch (RemoteException e) {
+		} 
+		catch (RemoteException e) 
+		{
 			e.printStackTrace();
 		}
 		return false;
@@ -304,7 +306,8 @@ public class Operation implements Serializable {
 		catch (DeadlockException e)
 		{
 			e.printStackTrace();
-		} catch (RemoteException e) {
+		} catch (RemoteException e) 
+		{
 			e.printStackTrace();
 		}
 		return -1;
