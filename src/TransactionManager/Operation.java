@@ -378,7 +378,8 @@ public class Operation {
 		} catch (InvalidTransactionException e) {
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			e.printStackTrace();
+			Trace.error("Did not receive commit confirmation from RM server. Server crashed. Returning false");
+			return false;
 		} catch (TransactionAbortedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -463,6 +464,11 @@ public class Operation {
 	public ResourceManager getRM() throws RemoteException
 	{
 		return this.rm;
+	}
+	
+	public void rollback() throws RemoteException
+	{
+		rm.rollback();
 	}
 	
 	

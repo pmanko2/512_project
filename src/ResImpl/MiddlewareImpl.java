@@ -49,6 +49,8 @@ public class MiddlewareImpl implements ResourceManager {
 	
 	private static int port;
 	private static String registry_name;
+	private static CrashType crashType;
+	private static String serverToCrash;
 
 	/**
 	 * Middleware takes care of all reservations - this is due to the inseparability of the 
@@ -58,6 +60,9 @@ public class MiddlewareImpl implements ResourceManager {
 
 	public static void main(String[] args)
 	{
+		crashType = null;
+		serverToCrash = null;
+		
 		// Figure out where server is running
         String server = "teaching";
        // int port = 1099;
@@ -1146,20 +1151,7 @@ public class MiddlewareImpl implements ResourceManager {
 	 */
 	public void crash(String which) throws RemoteException 
 	{
-		if (which.equals("flights"))
-		{
-			flights_rm.crash(which);
-		}
-		else if (which.equals("cars"))
-		{
-			cars_rm.crash(which);
-		}
-		else if (which.equals("hotels"))
-		{
-			rooms_rm.crash(which);
-		}
-		//if it's not any of the above, it must be this one
-		else
+		if(which.equals("middleware"))
 		{
 			try {
 				//unregister this RM from the registry
@@ -1177,6 +1169,7 @@ public class MiddlewareImpl implements ResourceManager {
 				e.printStackTrace();
 			}
 		}
+
 	}
 	
 	
@@ -1235,6 +1228,30 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public String getName() throws RemoteException {
 		return "middleware";
+	}
+	
+	@Override
+	public void setCrashFlags(String serverToCrash, CrashType crashType)
+	{
+		MiddlewareImpl.serverToCrash = serverToCrash;
+		MiddlewareImpl.crashType = crashType;
+		
+		if(serverToCrash.equals("middleware"))
+			tm.setCrashFlags(this, crashType, serverToCrash);
+		else if(serverToCrash.equals("flights"))
+			tm.setCrashFlags(flights_rm, crashType, serverToCrash);
+		else if(serverToCrash.equals("cars"))
+			tm.setCrashFlags(cars_rm, crashType, serverToCrash);
+		else 
+			tm.setCrashFlags(rooms_rm, crashType, serverToCrash);
+		
+	}
+
+	@Override
+	public void rollback() throws RemoteException 
+	{
+		// TODO Auto-generated method stub
+		
 	}
 
 

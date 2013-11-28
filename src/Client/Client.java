@@ -1,5 +1,6 @@
 package Client;
 
+import ResImpl.CrashType;
 import ResInterface.*;
 import TransactionManager.TransactionAbortedException;
 
@@ -740,7 +741,7 @@ public class Client
 	                System.exit(1);
 	                break;
 	            case 27:
-	                if(arguments.size()!=2){
+	                if(arguments.size()!=3){
 		                obj.wrongNumber();
 		                break;
 	                }
@@ -752,8 +753,46 @@ public class Client
     	            	System.out.println("\"" + serverToCrash + "\" isn't a valid option. Please try again.");
     	            	break;
     	            }
+    	            
+    	            String crashType = obj.getString(arguments.elementAt(2));
+    	            
+    	            if(!crashType.equals("beforeVoteRequest") && !crashType.equals("afterRequestBeforeVoteReturn")
+    	            		&& !crashType.equals("afterVoteReturnBeforeCommitRequest") && !crashType.equals("afterSendingAnswer")
+    	            		&& !crashType.equals("afterDecisionBeforeCommit") && !crashType.equals("TMBeforeReplies")
+    	            		&& !crashType.equals("TMSomeReplies") && !crashType.equals("TMBeforeDecision")
+    	            		&& !crashType.equals("TMSomeDecisions") && !crashType.equals("TMAllDecisions")
+    	            		&& !crashType.equals("TMBeforeDecisionSent"))
+    	            {
+    	            	System.out.println("\"" + crashType + "\" isn't a valid option. Please try again.");
+    	            	break;
+    	            }
     	            //send request
-    	            rm.crash(serverToCrash);
+    	            CrashType type;
+    	            
+    	            if(crashType.equals("beforeVoteRequest"))
+    	            	type = CrashType.BEFORE_VOTE_REQUEST;
+    	            else if(crashType.equals("afterRequestBeforeVoteReturn"))
+    	            	type = CrashType.AFTER_REQUEST_BEFORE_VOTE_RETURN;
+    	            else if(crashType.equals("afterSendingAnswer"))
+    	            	type = CrashType.AFTER_SENDING_ANSWER;
+    	            else if(crashType.equals("afterDecisionBeforeCommit"))
+    	            	type = CrashType.AFTER_DECISION_BEFORE_COMMIT;
+    	            else if(crashType.equals("TMBeforeReplies"))
+    	            	type = CrashType.TM_BEFORE_REPLIES;
+    	            else if(crashType.equals("TMSomeReplies"))
+    	            	type = CrashType.TM_SOME_REPLIES;
+    	            else if(crashType.equals("TMBeforeDecision"))
+    	            	type = CrashType.TM_BEFORE_DECISION;
+    	            else if(crashType.equals("TMSomeDecisions"))
+    	            	type = CrashType.TM_SOME_DECISIONS_SENT;
+    	            else if(crashType.equals("TMAllDecisions"))
+    	            	type = CrashType.TM_ALL_DECISIONS_SENT;
+    	            else if(crashType.equals("TMBeforeDecisionSent"))
+    	            	type = CrashType.TM_BEFORE_DECISION_SENT;
+    	            else
+    	            	type = CrashType.AFTER_VOTE_RETURN_BEFORE_COMMIT_REQUEST;
+    	            
+    	            rm.setCrashFlags(serverToCrash, type);
     	       
 	            	break;
 	            	
