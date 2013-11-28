@@ -37,6 +37,7 @@ public class TransactionManager {
 	private static ScheduledExecutorService scheduler;
 	private static Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	private long secondsToLive;
+	private String decision;
 	
 	private CrashType crashType;
 	private ResourceManager serverToCrash;
@@ -58,6 +59,7 @@ public class TransactionManager {
 		this.crashType = null;
 		this.serverToCrash = null;
 		this.crashServerName = null;
+		decision = null;
 		
 		//set up scheduler object
 		scheduler = Executors.newScheduledThreadPool(1000);
@@ -131,6 +133,9 @@ public class TransactionManager {
 	 */
 	public boolean prepare(int transactionID) throws RemoteException, TransactionAbortedException, InvalidTransactionException
 	{
+		this.decision = null;
+		//flushDecisionToDisk(transactionID);
+		
 		if(crashType == CrashType.BEFORE_VOTE_REQUEST)
 			serverToCrash.crash(crashServerName);
 		
@@ -141,23 +146,33 @@ public class TransactionManager {
 		
 		// crash after voting but before decision
 		if(crashType == CrashType.TM_BEFORE_DECISION)
+		{
 			serverToCrash.crash(crashServerName);
+			return false;
+		}
 		
 		if(allYes)
 		{
 			Trace.info("Voting process returned all YES. Committing transaction");
-
+			this.decision = "commit";
+			//flushDecisionToDisk(transactionID);
+			
 			if(crashType == CrashType.AFTER_VOTE_RETURN_BEFORE_COMMIT_REQUEST)
 				serverToCrash.crash(crashServerName);
 			
 			if(crashType == CrashType.TM_BEFORE_DECISION_SENT)
+			{
 				serverToCrash.crash(crashServerName);
+				return true;
+			}
 
 			return this.commit(transactionID);
 		}
 		else
 		{
 			Trace.info("Voting process returned at least one NO. Aborting transaction");
+			this.decision = "abort";
+			//flushDecisionToDisk(transactionID);
 			this.abort(transactionID);
 			return false;
 		}
@@ -208,6 +223,97 @@ public class TransactionManager {
 			e.printStackTrace();
 		}
 	}
+	
+	/*
+	public synchronized void flushDecisionToDisk(int TRANSACTION_ID)
+	{
+		try {
+	    	//retrieve master record file (if it doesn't exist, create it and write out string)
+	        String masterPath = "/home/2011/nwebst1/comp512/data/decision/master_record.loc";
+			String newLocation = "/home/2011/nwebst1/comp512/data/decision";
+	        
+	        File masterFile = new File(masterPath);
+	        
+	        //if master doesn't exist, create it and write default path
+	        if (!masterFile.exists())
+	        {
+	        	//create master record file
+	        	masterFile.getParentFile().getParentFile().mkdir();
+	        	masterFile.getParentFile().mkdir();
+	        	masterFile.createNewFile();
+	        	
+	        	//create default string
+	        	newLocation = "/home/2011/nwebst1/comp512/data/decision/dataA/";
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+
+	        	FileOutputStream fos = new FileOutputStream(masterFile);
+	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	        	oos.writeObject(newLocation);
+	        	fos.close();
+	        	oos.close();
+	        }
+	        //otherwise, read in string file path for master record location
+	        else
+	        {
+	        	FileInputStream fis = new FileInputStream(masterFile);
+	        	ObjectInputStream ois = new ObjectInputStream(fis);
+	        	String dataPath = (String) ois.readObject();
+	        	fis.close();
+	        	ois.close();
+	        	
+	        	//update master record				
+				String[] masterPathArray = dataPath.split("/");
+				String data_location = masterPathArray[masterPathArray.length - 1];
+				
+				if (data_location.equals("dataA"))
+				{
+					newLocation = newLocation + "/dataB/";
+				}
+				else
+				{
+					newLocation = newLocation + "/dataA/";
+				}
+				
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				
+				//write new location to master_record.loc
+				masterFile = new File(masterPath);
+				FileOutputStream fos = new FileOutputStream(masterFile);
+		    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+				oos.writeObject(newLocation);
+				fos.close();
+				oos.close();
+	        }
+       
+	    	//create file path for data for TM
+        	String filePathTM = newLocation + "decision.data";
+        	
+        	//create file objects so that we can write data to disk
+	    	File tm_file = new File(filePathTM);
+	    	
+	    	//if file doesn't exist, then create it
+    		if (!tm_file.exists())
+    		{
+    			tm_file.getParentFile().mkdir();
+    			tm_file.createNewFile();
+    		}
+			
+    		//write TM data to disk
+    		FileOutputStream fos = new FileOutputStream(tm_file);
+    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+    		//write transaction table
+    		oos.writeObject(decision);
+    		oos.writeInt(TRANSACTION_ID);
+    		fos.close();
+    		oos.close();
+					
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}  	
+	}*/
 	
 	   /**
      * This method is called whenever something is committed/aborted in order to flush changes to disk; 
@@ -306,9 +412,10 @@ public class TransactionManager {
 	 * @param file File path to transaction manager data
 	 * @throws IOException 
 	 * @throws ClassNotFoundException 
+	 * @throws TransactionAbortedException 
 	 */
 	@SuppressWarnings("unchecked")
-	public void readFromDisk() throws ClassNotFoundException, IOException
+	public void readFromDisk() throws ClassNotFoundException, IOException, TransactionAbortedException
 	{
 		/**
 		 * Read in data about transactions in progress
@@ -383,6 +490,59 @@ public class TransactionManager {
 	    }
 	    
 	    /**
+		 * Read in data about any decision that was made
+		 */
+	   /* masterPath = "/home/2011/nwebst1/comp512/data/decision/master_record.loc";
+	    f = new File(masterPath);
+	    //if Master Record doesn't exist we ignore all other file reads
+	    if (f.exists())
+	    {
+	    	System.out.println("reading from " + masterPath);
+	    	
+	    	//get path to master record
+	    	FileInputStream fis = new FileInputStream(masterPath);
+	    	ObjectInputStream ois = new ObjectInputStream(fis);
+	    	String masterRecordPath = (String) ois.readObject();
+	    	fis.close();
+	    	ois.close();
+	    	
+	    	//get path to data for TM
+	    	String filePathTM = masterRecordPath + "decision.data";
+	    	
+	    	
+	    	//create file objects for these data files
+	      	File file = new File(filePathTM);
+	    	
+			Trace.info("Reading decision data back into main memory..."
+					+ "\n" + file);
+		
+			fis = new FileInputStream(file);
+			ois = new ObjectInputStream(fis);
+			
+			decision = (String) ois.readObject();
+			int trxn_id = ois.readInt();
+					
+			if(decision != null)
+			{
+				Trace.info("TM was able to get all votes before it crashed. It reached a decision to " + decision);
+				
+				if(decision.equals("commit"))
+				{
+					Trace.info("Committing transaction " + trxn_id);
+					commit(trxn_id);
+				}
+				else
+				{
+					Trace.info("Aborting transaction " + trxn_id);
+					abort(trxn_id);
+				}
+			}
+			
+			fis.close();
+			ois.close();
+	    }*/
+	    
+	    /**
 		 * Read in data about any transactions that need rollbacks/aborts to be done
 		 */
 	    masterPath = "/home/2011/nwebst1/comp512/data/rollbacks/master_record.loc";
@@ -390,6 +550,8 @@ public class TransactionManager {
 	    //if Master Record doesn't exist we ignore all other file reads
 	    if (f.exists())
 	    {
+	    	System.out.println("reading from " + masterPath);
+	    	
 	    	//get path to master record
 	    	FileInputStream fis = new FileInputStream(masterPath);
 	    	ObjectInputStream ois = new ObjectInputStream(fis);
@@ -415,14 +577,46 @@ public class TransactionManager {
 			ArrayList<Operation> abort = (ArrayList<Operation>) ois.readObject();
 					
 			Trace.info("Transaction " + trxn_id + " is rolling back and aborting as necessary.");
+			Trace.info("We need to roll back " + rollback.size() + " operations");
+			Trace.info("We need to abort back " + abort.size() + " operations");
+			
 			for (Operation o : rollback)
 			{
-				o.rollback();
+				Trace.info("We are rolling back RM " + o.getRMName());
+				
+				String rmName = o.getRMName();
+				
+				if(rmName.equals("flights"))
+					flights.rollback();
+				
+				if(rmName.equals("cars"))
+					cars.rollback();
+				
+				if(rmName.equals("hotels"))
+					hotels.rollback();
+				
+				if(rmName.equals("middleware"))
+					middleware.rollback();
 			}
+			
 			for (Operation o : abort)
 			{
-				o.abort();
+				String rmName = o.getRMName();
+				
+				if(rmName.equals("flights"))
+					flights.abort(trxn_id);
+				
+				if(rmName.equals("cars"))
+					cars.abort(trxn_id);
+				
+				if(rmName.equals("hotels"))
+					hotels.abort(trxn_id);
+				
+				if(rmName.equals("middleware"))
+					middleware.abort(trxn_id);
 			}
+			
+			lm.UnlockAll(trxn_id);
 			transaction_table.remove("" + trxn_id);
 			
 			fis.close();

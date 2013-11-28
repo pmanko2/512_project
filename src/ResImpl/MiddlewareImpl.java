@@ -190,6 +190,8 @@ public class MiddlewareImpl implements ResourceManager {
             //if Master Record doesn't exist we ignore all other file reads
             if (f.exists())
             {
+            	System.out.println("reading from " + masterPath);
+            	
             	//get path to master record
             	FileInputStream fis = new FileInputStream(masterPath);
             	ObjectInputStream ois = new ObjectInputStream(fis);
@@ -240,7 +242,7 @@ public class MiddlewareImpl implements ResourceManager {
    public int start() throws RemoteException
     {
 	   int return_value = tm.start();
-	   //flushToDisk();
+	   flushToDisk();
 	   return return_value;
     }
     

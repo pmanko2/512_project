@@ -286,6 +286,11 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public boolean commit(int op_id) throws RemoteException, InvalidTransactionException
     {
+    	if(failType == CrashType.AFTER_DECISION_BEFORE_COMMIT)
+    	{
+    		crash(serverToCrash);
+    	}
+    	
     	//write any changes to disk
     	ReservableItem item =(ReservableItem)non_committed_items.get("" + op_id);
     	if (item != null)
@@ -311,6 +316,11 @@ public class ResourceManagerImpl implements ResourceManager
      */
     public void abort(int op_id) throws RemoteException
     {
+    	if(failType == CrashType.AFTER_DECISION_BEFORE_COMMIT)
+    	{
+    		crash(serverToCrash);
+    	}
+    	
     	//put back any old data (used for cases where the state of an object is changed
     	//instead of having been simply newly created
     	ReservableItem item = (ReservableItem) abort_items.get("" + op_id);

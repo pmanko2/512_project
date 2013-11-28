@@ -191,6 +191,9 @@ public class Transaction implements Serializable {
 			rollBack.add(flightOperations.get(0));
 			flushRMToDisk(flightOperations);
 		}
+		
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the flight RM committed");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the flight RM committed");
 		flushCommitToDisk(rollBack, abortList);
 		
 		for (Operation o : carOperations)
@@ -214,6 +217,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(carOperations);
 		}
 		
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the cars RM committed");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the cars RM committed");
 		flushCommitToDisk(rollBack, abortList);
 		
 		if(type == CrashType.TM_SOME_DECISIONS_SENT)
@@ -221,6 +226,7 @@ public class Transaction implements Serializable {
 			try
 			{
 				serverToCrash.crash("middleware");
+				return false;
 			} catch (RemoteException e)
 			{
 				e.printStackTrace();
@@ -248,6 +254,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(roomOperations);
 		}
 		
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the rooms RM committed");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the rooms RM committed");
 		flushCommitToDisk(rollBack, abortList);
 		
 		for (Operation o : middlewareOperations)
@@ -267,6 +275,8 @@ public class Transaction implements Serializable {
 		if(middlewareOperations.size() > 0)
 			flushRMToDisk(middlewareOperations);
 		
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the middleware RM committed");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the middleware RM committed");
 		flushCommitToDisk(rollBack, abortList);
 
 		if(type == CrashType.TM_ALL_DECISIONS_SENT)
@@ -310,6 +320,12 @@ public class Transaction implements Serializable {
 	{
 		int voteCounter = 0;
 		
+		ArrayList<Operation> rollback = new ArrayList<Operation>();
+		ArrayList<Operation> abort = operations;
+		
+		// want to flush abort table to disk so that if server crashes we can abort all operations
+		flushCommitToDisk(rollback, abort);
+		
 		// go through all operation votes. if we have a no vote, return false
 		for(Operation voter : operations)
 		{
@@ -317,10 +333,14 @@ public class Transaction implements Serializable {
 			try
 			{
 				currentVote = voter.requestVoteFromRM();
+				
 				voteCounter ++;
 				
 				if(voteCounter == 2 && operations.size() > 2 && type == CrashType.TM_SOME_REPLIES)
+				{
 					serverToCrash.crash("middleware");
+					return false;
+				}
 				
 				if(currentVote == Vote.NO)
 					return false;
@@ -519,7 +539,7 @@ public class Transaction implements Serializable {
 			e.printStackTrace();
 		}  	
 	}
-
+ 
 	/**
 	 * Reset the lockmanager pointer in the transaction and then pass it to the operations  
 	 * in this transaction along with all the other rms so that they can reacquire

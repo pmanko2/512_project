@@ -32,12 +32,23 @@ public class Operation implements Serializable {
 	private int transaction_id;
 	private static int operation_count = 0;
 	private int OP_ID;
+	private String rmName;
 	private ArrayList<String> keys;
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, Hashtable<String,Object> args, LockManager l)
 	{
 		transaction_id = id;
 		rm = r;
+		rmName = null;
+		try
+		{
+			rmName = rm.getName();
+		} catch (RemoteException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		operation = op;
 		arguments = args;
 		lm = l;
@@ -523,5 +534,9 @@ public class Operation implements Serializable {
 		operation_count = count;
 	}
 	
+	public String getRMName()
+	{
+		return this.rmName;
+	}
 	
 }
