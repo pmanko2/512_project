@@ -27,16 +27,12 @@ public class Operation implements Serializable {
 	private static final long serialVersionUID = 6246636976108542880L;
 	private transient ResourceManager rm;
 	private OP_CODE operation;
-	//TODO find a way to serialize this
 	private Hashtable<String, Object> arguments;
 	private static LockManager lm;
 	private int transaction_id;
 	private static int operation_count = 0;
 	private int OP_ID;
 	private ArrayList<String> keys;
-	//TODO will these need to be read back into memory upon recovery/recreated?
-	//private transient final ScheduledExecutorService scheduler;
-	//private transient Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, Hashtable<String,Object> args, LockManager l)
 	{
@@ -48,8 +44,6 @@ public class Operation implements Serializable {
 		OP_ID = operation_count;
 		operation_count++;
 		keys = new ArrayList<String>();
-		//scheduler = Executors.newScheduledThreadPool(1000);
-		//scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
 	public Operation(int id, ResourceManager r, OP_CODE op, Hashtable<String,Object> args, LockManager l, int specified_id)
@@ -61,8 +55,6 @@ public class Operation implements Serializable {
 		lm = l;
 		OP_ID = specified_id;
 		keys = new ArrayList<String>();
-		//scheduler = Executors.newScheduledThreadPool(1000);
-		//scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
 	/**
@@ -381,7 +373,6 @@ public class Operation implements Serializable {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return false;
@@ -501,10 +492,6 @@ public class Operation implements Serializable {
 	public Vote requestVoteFromRM() throws RMCrashException
 	{
 		try {
-			
-			/*TimeoutTimer rmTimeout = new TimeoutTimer(rm.getName(), this);
-			ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(rmTimeout, 5, TimeUnit.SECONDS);
-			scheduledFutures.put("" + OP_ID, scheduledFuture);*/
 			return rm.vote(this.OP_ID, this.operation);
 		} catch (RemoteException e) {
 			Trace.error("Remote Exception in RM. Could not connect to RM");

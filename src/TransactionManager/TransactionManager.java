@@ -30,13 +30,11 @@ public class TransactionManager {
 
 	//this table manages all transaction objects, mapped by id
 	private Hashtable<String, Transaction> transaction_table;
-	//TODO Write transaction_table to disk
 	private static int transaction_id_counter;
 	private static LockManager lm;
 	private static ScheduledExecutorService scheduler;
 	private static Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	private long secondsToLive;
-	//TODO will this need to be reloaded when MW/TM are recovered since it won't be read in?
 	private static ResourceManager middleware;
 	//private static ResourceManager
 	private static ResourceManager flights;
@@ -50,7 +48,6 @@ public class TransactionManager {
 		lm = new LockManager();
 		
 		//set up scheduler object
-		//TODO need to shut this down on exit
 		scheduler = Executors.newScheduledThreadPool(1000);
 		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 		secondsToLive = 300;

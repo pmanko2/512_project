@@ -24,7 +24,6 @@ public class Transaction implements Serializable {
 	 */
 	private static final long serialVersionUID = -4994756763174534648L;
 	private final int TRANSACTION_ID;
-	//TODO write operations to disk
 	//array list of operations this transaction is responsible for
 	private transient ArrayList<Operation> operations;
 	private static LockManager lm;

@@ -178,9 +178,6 @@ public interface ResourceManager extends Remote
 	public void itemUnReserved(int id, int customerID, String key, ReservedItem reserveditem) 
 	throws RemoteException;
 	
-	public boolean selfDestruct()
-	throws RemoteException;
-	
 	public void flushToDisk() 
 	throws RemoteException;
 	
@@ -191,5 +188,8 @@ public interface ResourceManager extends Remote
 	throws RemoteException;
 	
 	public void crash(String which)
+	throws RemoteException;
+	
+	public void rollback()
 	throws RemoteException;
 }
