@@ -149,7 +149,7 @@ public class Transaction implements Serializable {
 	 */
 	public boolean commit()
 	{	
-		ArrayList<Operation> flightOperations = getOperationsForRM("flight");
+		ArrayList<Operation> flightOperations = getOperationsForRM("flights");
 		ArrayList<Operation> carOperations = getOperationsForRM("cars");
 		ArrayList<Operation> roomOperations = getOperationsForRM("rooms");
 		ArrayList<Operation> middlewareOperations = getOperationsForRM("middleware");
