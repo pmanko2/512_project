@@ -205,11 +205,6 @@ public class TransactionManager {
 		}
 	}
 	
-	private void crash(String which, Transaction transaction) throws RemoteException
-	{
-		transaction.crash(which);
-	}
-	
 	/**
 	 * Method called from MW when writing transaction data to disk
 	 * @param file File path to transactionmanager data
