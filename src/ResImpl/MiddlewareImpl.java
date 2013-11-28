@@ -248,13 +248,7 @@ public class MiddlewareImpl implements ResourceManager {
      */
     public boolean commit(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
-    	boolean to_return = tm.prepare(transaction_id);
-    	
-    	if (to_return)
-    	{
-    		flushToDisk();
-    	}
-    	return to_return;
+    	return tm.prepare(transaction_id);
     }
 
     /**
@@ -279,7 +273,6 @@ public class MiddlewareImpl implements ResourceManager {
     public void abort(int transaction_id) throws RemoteException, InvalidTransactionException, TransactionAbortedException
     {
     	tm.abort(transaction_id);
-    	flushToDisk();
     }
     
     /**
