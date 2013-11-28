@@ -299,9 +299,6 @@ public class ResourceManagerImpl implements ResourceManager
     	{
     		abort_items.remove("" + op_id);
     	}
-    	
-    	//flush changes to disk
-    	flushToDisk();
 
     	return true;
     }
@@ -328,9 +325,6 @@ public class ResourceManagerImpl implements ResourceManager
     	{
         	non_committed_items.remove(item.getKey());
     	}
-    	
-    	//flush changes to disk
-    	flushToDisk();
     }
     
     // Reads a data item

@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -88,7 +89,7 @@ public class TransactionManager {
 		scheduledFutures.put("" + to_return, scheduledFuture);
 		
 		//flush transactions to disk
-		middleware.flushToDisk();
+		flushToDisk();
 		
 		return to_return;
 	}
@@ -104,7 +105,7 @@ public class TransactionManager {
 		transaction_table.remove("" + transaction_id);
 		scheduledFutures.get("" + transaction_id).cancel(false);
 		scheduledFutures.remove("" + transaction_id);
-		middleware.flushToDisk();
+		flushToDisk();
 		return return_value;
 	}
 	
@@ -119,7 +120,7 @@ public class TransactionManager {
 		transaction_table.remove("" + transaction_id);
 		scheduledFutures.get("" + transaction_id).cancel(false);
 		scheduledFutures.remove("" + transaction_id);
-		middleware.flushToDisk();
+		flushToDisk();
 	}
 	
 	/**
@@ -170,8 +171,7 @@ public class TransactionManager {
 	public boolean addOperation(int transaction_id, ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys) throws RemoteException
 	{
 		boolean to_return = transaction_table.get("" + transaction_id).addOperation(r, op, args, keys);
-		middleware.flushToDisk();
-		//TODO should we flush to disk here? 
+		flushToDisk();
 		Trace.info("TransactionTable size: " + transaction_table.size());
 		return to_return;
 	}
@@ -179,14 +179,16 @@ public class TransactionManager {
 	public int addOperationIntReturn(int transaction_id, ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys) throws RemoteException
 	{
 		int to_return = transaction_table.get("" + transaction_id).addOperationIntReturn(r, op, args, keys);
-		middleware.flushToDisk();
+		flushToDisk();
+		Trace.info("TransactionTable size: " + transaction_table.size());
 		return to_return;
 	}
 
 	public String addOperationStringReturn(int transaction_id, ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys) throws RemoteException
 	{
 		String to_return = transaction_table.get("" + transaction_id).addOperationStringReturn(r, op, args, keys);
-		middleware.flushToDisk();
+		flushToDisk();
+		Trace.info("TransactionTable size: " + transaction_table.size());
 		return to_return;
 	}
 	
@@ -204,20 +206,96 @@ public class TransactionManager {
 		}
 	}
 	
-	/**
-	 * Method called from MW when writing transaction data to disk
-	 * @param file File path to transactionmanager data
-	 * @throws IOException 
-	 */
-	public void flushToDisk(String file) throws IOException
-	{
-		//write TM data to disk
-		FileOutputStream fos = new FileOutputStream(file);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		//write transaction table
-		oos.writeObject(transaction_table);
-		fos.close();
-		oos.close();
+	   /**
+     * This method is called whenever something is committed/aborted in order to flush changes to disk; 
+     */
+    public synchronized void flushToDisk()
+    {   
+    	try {
+	    	//retrieve master record file (if it doesn't exist, create it and write out string)
+	        String masterPath = "/home/2011/nwebst1/comp512/data/trxn_manager/master_record.loc";
+			String newLocation = "/home/2011/nwebst1/comp512/data/trxn_manager";
+	        
+	        File masterFile = new File(masterPath);
+	        
+	        //if master doesn't exist, create it and write default path
+	        if (!masterFile.exists())
+	        {
+	        	//create master record file
+	        	masterFile.getParentFile().getParentFile().mkdir();
+	        	masterFile.getParentFile().mkdir();
+	        	masterFile.createNewFile();
+	        	
+	        	//create default string
+	        	newLocation = "/home/2011/nwebst1/comp512/data/trxn_manager/dataA/";
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+
+	        	FileOutputStream fos = new FileOutputStream(masterFile);
+	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	        	oos.writeObject(newLocation);
+	        	fos.close();
+	        	oos.close();
+	        }
+	        //otherwise, read in string file path for master record location
+	        else
+	        {
+	        	FileInputStream fis = new FileInputStream(masterFile);
+	        	ObjectInputStream ois = new ObjectInputStream(fis);
+	        	String dataPath = (String) ois.readObject();
+	        	fis.close();
+	        	ois.close();
+	        	
+	        	//update master record				
+				String[] masterPathArray = dataPath.split("/");
+				String data_location = masterPathArray[masterPathArray.length - 1];
+				
+				if (data_location.equals("dataA"))
+				{
+					newLocation = newLocation + "/dataB/";
+				}
+				else
+				{
+					newLocation = newLocation + "/dataA/";
+				}
+				
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				
+				//write new location to master_record.loc
+				masterFile = new File(masterPath);
+				FileOutputStream fos = new FileOutputStream(masterFile);
+		    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+				oos.writeObject(newLocation);
+				fos.close();
+				oos.close();
+	        }
+       
+	    	//create file path for data for TM
+        	String filePathTM = newLocation + "transaction_manager.data";
+        	
+        	//create file objects so that we can write data to disk
+	    	File tm_file = new File(filePathTM);
+	    	
+	    	//if file doesn't exist, then create it
+    		if (!tm_file.exists())
+    		{
+    			tm_file.getParentFile().mkdir();
+    			tm_file.createNewFile();
+    		}
+			
+    		//write TM data to disk
+    		FileOutputStream fos = new FileOutputStream(tm_file);
+    		ObjectOutputStream oos = new ObjectOutputStream(fos);
+    		//write transaction table
+    		oos.writeObject(transaction_table);
+    		fos.close();
+    		oos.close();
+					
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}  	
 	}
 	
 	/**
@@ -227,56 +305,75 @@ public class TransactionManager {
 	 * @throws ClassNotFoundException 
 	 */
 	@SuppressWarnings("unchecked")
-	public void readFromDisk(String file) throws ClassNotFoundException, IOException
+	public void readFromDisk() throws ClassNotFoundException, IOException
 	{
-		Trace.info("Reading TransactionManager data back into main memory..."
-				+ "\n" + file);
-
-		FileInputStream fis = new FileInputStream(file);
-		ObjectInputStream ois = new ObjectInputStream(fis);
+	    String masterPath = "/home/2011/nwebst1/comp512/data/trxn_manager/master_record.loc";
+	    File f = new File(masterPath);
+	    //if Master Record doesn't exist we ignore all other file reads
+	    if (f.exists())
+	    {
+	    	//get path to master record
+	    	FileInputStream fis = new FileInputStream(masterPath);
+	    	ObjectInputStream ois = new ObjectInputStream(fis);
+	    	String masterRecordPath = (String) ois.readObject();
+	    	fis.close();
+	    	ois.close();
+	    	
+	    	//get path to data for TM
+	    	String filePathTM = masterRecordPath + "transaction_manager.data";
+	    	
+	    	
+	    	//create file objects for these data files
+	      	File file = new File(filePathTM);
+	    	
+			Trace.info("Reading TransactionManager data back into main memory..."
+					+ "\n" + file);
 		
-		transaction_table = (Hashtable<String, Transaction>) ois.readObject();
-		Trace.info("transaction_table size: " + transaction_table.size());
-		
-		//find max key (transaction ID) and use to reset transaction_id_counter
-		//at the same time, reset timers on transactions
-		int max = 0; 
-		Set<String> keys = transaction_table.keySet();
-		for (String key : keys)
-		{			
-			int trxnID = transaction_table.get(key).getID();
-			Trace.info("transaction ID: " + trxnID);
-			if (trxnID > max)
-			{
-				max = trxnID;
+			fis = new FileInputStream(file);
+			ois = new ObjectInputStream(fis);
+			
+			transaction_table = (Hashtable<String, Transaction>) ois.readObject();
+			Trace.info("transaction_table size: " + transaction_table.size());
+			
+			//find max key (transaction ID) and use to reset transaction_id_counter
+			//at the same time, reset timers on transactions
+			int max = 0; 
+			Set<String> keys = transaction_table.keySet();
+			for (String key : keys)
+			{			
+				int trxnID = transaction_table.get(key).getID();
+				Trace.info("transaction ID: " + trxnID);
+				if (trxnID > max)
+				{
+					max = trxnID;
+				}
+				TransactionTimer tt = new TransactionTimer(trxnID, this);
+				ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(tt, secondsToLive, TimeUnit.SECONDS);
+				scheduledFutures.put("" + trxnID, scheduledFuture);
 			}
-			TransactionTimer tt = new TransactionTimer(trxnID, this);
-			ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(tt, secondsToLive, TimeUnit.SECONDS);
-			scheduledFutures.put("" + trxnID, scheduledFuture);
-		}
-		transaction_id_counter = max + 1;
-		
-		//reset all locks
-		//reexecute all operations on RMs
-		keys = transaction_table.keySet();
-		int maxOPID = 0;
-		for (String key : keys)
-		{
-			Transaction t = transaction_table.get(key);
-			int thisTrxnOpMax = t.reexecute(lm, flights, cars, hotels, middleware);
-			if (thisTrxnOpMax > maxOPID)
+			transaction_id_counter = max + 1;
+			
+			//reset all locks
+			//reexecute all operations on RMs
+			keys = transaction_table.keySet();
+			int maxOPID = 0;
+			for (String key : keys)
 			{
-				maxOPID = thisTrxnOpMax;
+				Transaction t = transaction_table.get(key);
+				int thisTrxnOpMax = t.reexecute(lm, flights, cars, hotels, middleware);
+				if (thisTrxnOpMax > maxOPID)
+				{
+					maxOPID = thisTrxnOpMax;
+				}
 			}
-		}
-		
-		//reset operation counter
-		//TODO is this just printing weirdly or is it actually not working?
-		Trace.info("Setting new starting max op count to: " + (maxOPID + 1));
-		Operation.setOpCount(maxOPID + 1);
-		
-		fis.close();
-		ois.close();
+			
+			//reset operation counter
+			//TODO is this just printing weirdly or is it actually not working?
+			Trace.info("Setting new starting max op count to: " + (maxOPID + 1));
+			Operation.setOpCount(maxOPID + 1);
+			
+			fis.close();
+			ois.close();
+	    }
 	}
-	
 }

@@ -199,11 +199,9 @@ public class MiddlewareImpl implements ResourceManager {
             	
             	//get paths to data items for this RM
             	String filePathItems = masterRecordPath + "items_table.data";
-            	String filePathTM = masterRecordPath + "transaction_manager.data";
             	
             	//create file objects for these data files
             	File items_file = new File(filePathItems);
-    	      	File tm_file = new File(filePathTM);
     	      	
     	      	//load items data into memory
     	    	if(items_file.exists()){
@@ -216,10 +214,7 @@ public class MiddlewareImpl implements ResourceManager {
     	        }
     	    	
     	    	//load TM data into memory
-    	    	if (tm_file.exists())
-    	    	{
-    	    		tm.readFromDisk(filePathTM);
-    	    	}
+    	    	tm.readFromDisk();
             }
             
         } catch (Exception e) {
@@ -376,22 +371,14 @@ public class MiddlewareImpl implements ResourceManager {
 	    	//create file paths for data for this RM
         	//get paths to data items for this RM
         	String filePathItems = newLocation + "items_table.data";
-        	String filePathTM = newLocation + "transaction_manager.data";
         	
         	//create file objects so that we can write data to disk
 	    	File items_file = new File(filePathItems);
-	    	File tm_file = new File(filePathTM);
 	    	
     		// if files don't exist, then create them
     		if (!items_file.exists()) {
     			items_file.getParentFile().mkdirs();
     			items_file.createNewFile();
-    		}
-    		
-    		if (!tm_file.exists())
-    		{
-    			tm_file.getParentFile().mkdir();
-    			tm_file.createNewFile();
     		}
     		
         	//write "persistent" items to disk
@@ -400,9 +387,6 @@ public class MiddlewareImpl implements ResourceManager {
 			oos.writeObject(m_itemHT);
 			fos.close();
 			oos.close();
-			
-			//flush tm data to disk
-			tm.flushToDisk(filePathTM);
 					
 			
 		} catch (IOException e) {
