@@ -271,7 +271,8 @@ public class TransactionManager {
 			}
 		}
 		
-		//reset operation counter?
+		//reset operation counter
+		//TODO is this just printing weirdly or is it actually not working?
 		Trace.info("Setting new starting max op count to: " + (maxOPID + 1));
 		Operation.setOpCount(maxOPID + 1);
 		
