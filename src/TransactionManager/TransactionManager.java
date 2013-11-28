@@ -78,6 +78,7 @@ public class TransactionManager {
 	public synchronized int start() throws RemoteException
 	{
 		Transaction t = new Transaction(transaction_id_counter, lm);
+		t.setCrashFlags(crashType, serverToCrash);
 		int to_return = t.getID();
 		transaction_id_counter++;
 		transaction_table.put("" + to_return, t);
@@ -200,7 +201,9 @@ public class TransactionManager {
 		
 		try
 		{
-			toCrash.setCrashFlags(serverName, type);
+			if(!crashServerName.equals("middleware"))
+				toCrash.setCrashFlags(serverName, type);
+			
 		} catch (RemoteException e){
 			e.printStackTrace();
 		}
