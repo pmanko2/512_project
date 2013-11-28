@@ -322,6 +322,10 @@ public class Transaction implements Serializable {
 	 */
 	public void rollback(ArrayList<Operation> rollBackList, ArrayList<Operation> abortList, String failedRM)
 	{
+		Trace.info("The number of RM's we need to rollback is: " + rollBackList.size());
+		Trace.info("The number of operations we need to abort is: " + abortList.size());
+		Trace.info("The RM that has failed is: " + failedRM);
+		
 		
 		// abort every operation that needs to be aborted
 		for(Operation toAbort : abortList)
