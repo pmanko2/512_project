@@ -192,8 +192,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(flightOperations);
 		}
 		
-		Trace.info("The size of the rollback list is " + rollBack.size() + " after the flight RM committed");
-		Trace.info("The size of the abort list is " + abortList.size() + " after the flight RM committed");
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the flight RM was processed for this transaction.");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the flight RM was processed for this transaction.");
 		flushCommitToDisk(rollBack, abortList);
 		
 		for (Operation o : carOperations)
@@ -217,8 +217,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(carOperations);
 		}
 		
-		Trace.info("The size of the rollback list is " + rollBack.size() + " after the cars RM committed");
-		Trace.info("The size of the abort list is " + abortList.size() + " after the cars RM committed");
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the cars RM was processed for this transaction.");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the cars RM was processed for this transaction.");
 		flushCommitToDisk(rollBack, abortList);
 		
 		if(type == CrashType.TM_SOME_DECISIONS_SENT)
@@ -254,8 +254,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(roomOperations);
 		}
 		
-		Trace.info("The size of the rollback list is " + rollBack.size() + " after the rooms RM committed");
-		Trace.info("The size of the abort list is " + abortList.size() + " after the rooms RM committed");
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the rooms RM was processed for this transaction.");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the rooms RM was processed for this transaction.");
 		flushCommitToDisk(rollBack, abortList);
 		
 		for (Operation o : middlewareOperations)
@@ -275,9 +275,13 @@ public class Transaction implements Serializable {
 		if(middlewareOperations.size() > 0)
 			flushRMToDisk(middlewareOperations);
 		
-		Trace.info("The size of the rollback list is " + rollBack.size() + " after the middleware RM committed");
-		Trace.info("The size of the abort list is " + abortList.size() + " after the middleware RM committed");
-		flushCommitToDisk(rollBack, abortList);
+		Trace.info("The size of the rollback list is " + rollBack.size() + " after the middleware RM was processed for this transaction.");
+		Trace.info("The size of the abort list is " + abortList.size() + " after the middleware RM was processed for this transaction.");
+		
+		//don't need to flush to disk at this point since all commits have been flushed to RMS
+		//flushCommitToDisk(rollBack, abortList);
+		//instead, we need to flush "null" lists so that when we read back in nothing is aborted/rolled back unnecessarily
+		flushCommitToDisk(new ArrayList<Operation>(), new ArrayList<Operation>());
 
 		if(type == CrashType.TM_ALL_DECISIONS_SENT)
 		{

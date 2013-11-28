@@ -155,7 +155,7 @@ public class TransactionManager {
 		{
 			Trace.info("Voting process returned all YES. Committing transaction");
 			this.decision = "commit";
-			//flushDecisionToDisk(transactionID);
+			flushDecisionToDisk(transactionID,"commit");
 			
 			if(crashType == CrashType.AFTER_VOTE_RETURN_BEFORE_COMMIT_REQUEST)
 				serverToCrash.crash(crashServerName);
@@ -172,7 +172,7 @@ public class TransactionManager {
 		{
 			Trace.info("Voting process returned at least one NO. Aborting transaction");
 			this.decision = "abort";
-			//flushDecisionToDisk(transactionID);
+			flushDecisionToDisk(transactionID, "abort");
 			this.abort(transactionID);
 			return false;
 		}
@@ -224,8 +224,8 @@ public class TransactionManager {
 		}
 	}
 	
-	/*
-	public synchronized void flushDecisionToDisk(int TRANSACTION_ID)
+	
+	public synchronized void flushDecisionToDisk(int TRANSACTION_ID, String d)
 	{
 		try {
 	    	//retrieve master record file (if it doesn't exist, create it and write out string)
@@ -298,12 +298,12 @@ public class TransactionManager {
     			tm_file.createNewFile();
     		}
 			
-    		//write TM data to disk
+    		//write decision to disk
     		FileOutputStream fos = new FileOutputStream(tm_file);
     		ObjectOutputStream oos = new ObjectOutputStream(fos);
-    		//write transaction table
-    		oos.writeObject(decision);
+    		//write decision
     		oos.writeInt(TRANSACTION_ID);
+    		oos.writeObject(d);
     		fos.close();
     		oos.close();
 					
@@ -313,7 +313,7 @@ public class TransactionManager {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}  	
-	}*/
+	}
 	
 	   /**
      * This method is called whenever something is committed/aborted in order to flush changes to disk; 
@@ -492,7 +492,7 @@ public class TransactionManager {
 	    /**
 		 * Read in data about any decision that was made
 		 */
-	   /* masterPath = "/home/2011/nwebst1/comp512/data/decision/master_record.loc";
+	    masterPath = "/home/2011/nwebst1/comp512/data/decision/master_record.loc";
 	    f = new File(masterPath);
 	    //if Master Record doesn't exist we ignore all other file reads
 	    if (f.exists())
@@ -518,11 +518,11 @@ public class TransactionManager {
 		
 			fis = new FileInputStream(file);
 			ois = new ObjectInputStream(fis);
-			
-			decision = (String) ois.readObject();
+
 			int trxn_id = ois.readInt();
+			decision = (String) ois.readObject();
 					
-			if(decision != null)
+			if(decision != null && transaction_table.get("" + trxn_id) != null)
 			{
 				Trace.info("TM was able to get all votes before it crashed. It reached a decision to " + decision);
 				
@@ -540,7 +540,7 @@ public class TransactionManager {
 			
 			fis.close();
 			ois.close();
-	    }*/
+	    }
 	    
 	    /**
 		 * Read in data about any transactions that need rollbacks/aborts to be done

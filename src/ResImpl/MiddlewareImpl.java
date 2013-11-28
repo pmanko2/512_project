@@ -214,10 +214,9 @@ public class MiddlewareImpl implements ResourceManager {
     	        	fis.close();
     	        	ois.close();
     	        }
-    	    	
-    	    	//load TM data into memory
-    	    	tm.readFromDisk();
             }
+	    	//load TM data into memory
+	    	tm.readFromDisk();
             
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -242,7 +241,7 @@ public class MiddlewareImpl implements ResourceManager {
    public int start() throws RemoteException
     {
 	   int return_value = tm.start();
-	   flushToDisk();
+	   //flushToDisk();
 	   return return_value;
     }
     
@@ -325,7 +324,8 @@ public class MiddlewareImpl implements ResourceManager {
 	        	
 	        	//create default string
 	        	newLocation = "/home/2011/nwebst1/comp512/data/middleware/dataA/";
-	        	
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+
 	        	FileOutputStream fos = new FileOutputStream(masterFile);
 	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
 	        	oos.writeObject(newLocation);
