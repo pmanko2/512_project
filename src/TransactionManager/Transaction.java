@@ -154,7 +154,7 @@ public class Transaction implements Serializable {
 	{	
 		ArrayList<Operation> flightOperations = getOperationsForRM("flights");
 		ArrayList<Operation> carOperations = getOperationsForRM("cars");
-		ArrayList<Operation> roomOperations = getOperationsForRM("rooms");
+		ArrayList<Operation> roomOperations = getOperationsForRM("hotels");
 		ArrayList<Operation> middlewareOperations = getOperationsForRM("middleware");
 		
 		ArrayList<Operation> rollBack = new ArrayList<Operation>();

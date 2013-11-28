@@ -221,6 +221,8 @@ public class MiddlewareImpl implements ResourceManager {
             System.err.println("Server exception: " + e.toString());
             e.printStackTrace();
         }
+        
+        System.out.println("Middleware Server Ready");
 
         // Create and install a security manager
         if (System.getSecurityManager() == null) {
