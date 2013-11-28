@@ -448,7 +448,7 @@ public class Transaction implements Serializable {
 	        	
 	        	//create default string
 	        	newLocation = "/home/2011/nwebst1/comp512/data/rollbacks/dataA/";
-				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				//Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
 
 	        	FileOutputStream fos = new FileOutputStream(masterFile);
 	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -478,7 +478,7 @@ public class Transaction implements Serializable {
 					newLocation = newLocation + "/dataA/";
 				}
 				
-				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				//Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
 				
 				//write new location to master_record.loc
 				masterFile = new File(masterPath);
