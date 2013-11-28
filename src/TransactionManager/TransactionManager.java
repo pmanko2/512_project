@@ -307,6 +307,9 @@ public class TransactionManager {
 	@SuppressWarnings("unchecked")
 	public void readFromDisk() throws ClassNotFoundException, IOException
 	{
+		/**
+		 * Read in data about transactions in progress
+		 */
 	    String masterPath = "/home/2011/nwebst1/comp512/data/trxn_manager/master_record.loc";
 	    File f = new File(masterPath);
 	    //if Master Record doesn't exist we ignore all other file reads
@@ -371,6 +374,53 @@ public class TransactionManager {
 			//TODO is this just printing weirdly or is it actually not working?
 			Trace.info("Setting new starting max op count to: " + (maxOPID + 1));
 			Operation.setOpCount(maxOPID + 1);
+			
+			fis.close();
+			ois.close();
+	    }
+	    
+	    /**
+		 * Read in data about any transactions that need rollbacks/aborts to be done
+		 */
+	    masterPath = "/home/2011/nwebst1/comp512/data/rollbacks/master_record.loc";
+	    f = new File(masterPath);
+	    //if Master Record doesn't exist we ignore all other file reads
+	    if (f.exists())
+	    {
+	    	//get path to master record
+	    	FileInputStream fis = new FileInputStream(masterPath);
+	    	ObjectInputStream ois = new ObjectInputStream(fis);
+	    	String masterRecordPath = (String) ois.readObject();
+	    	fis.close();
+	    	ois.close();
+	    	
+	    	//get path to data for TM
+	    	String filePathTM = masterRecordPath + "rollbacks.data";
+	    	
+	    	
+	    	//create file objects for these data files
+	      	File file = new File(filePathTM);
+	    	
+			Trace.info("Reading rollbacks data back into main memory..."
+					+ "\n" + file);
+		
+			fis = new FileInputStream(file);
+			ois = new ObjectInputStream(fis);
+			
+			int trxn_id = ois.readInt();
+			ArrayList<Operation> rollback = (ArrayList<Operation>) ois.readObject();
+			ArrayList<Operation> abort = (ArrayList<Operation>) ois.readObject();
+					
+			Trace.info("Transaction " + trxn_id + " is rolling back and aborting as necessary.");
+			for (Operation o : rollback)
+			{
+				o.rollback();
+			}
+			for (Operation o : abort)
+			{
+				o.abort();
+			}
+			transaction_table.remove("" + trxn_id);
 			
 			fis.close();
 			ois.close();

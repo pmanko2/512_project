@@ -1,5 +1,8 @@
 package TransactionManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -188,6 +191,7 @@ public class Transaction implements Serializable {
 			rollBack.add(flightOperations.get(0));
 			flushRMToDisk(flightOperations);
 		}
+		flushCommitToDisk(rollBack, abortList);
 		
 		for (Operation o : carOperations)
 		{
@@ -210,6 +214,9 @@ public class Transaction implements Serializable {
 			flushRMToDisk(carOperations);
 		}
 		
+		flushCommitToDisk(rollBack, abortList);
+
+		
 		for (Operation o : roomOperations)
 		{
 			if(!o.commit())
@@ -230,6 +237,8 @@ public class Transaction implements Serializable {
 			flushRMToDisk(roomOperations);
 		}
 		
+		flushCommitToDisk(rollBack, abortList);
+		
 		for (Operation o : middlewareOperations)
 		{
 			if(!o.commit())
@@ -247,6 +256,8 @@ public class Transaction implements Serializable {
 		if(middlewareOperations.size() > 0)
 			flushRMToDisk(middlewareOperations);
 		
+		flushCommitToDisk(rollBack, abortList);
+
 		if(type == CrashType.TM_ALL_DECISIONS_SENT)
 		{
 			try
@@ -398,6 +409,100 @@ public class Transaction implements Serializable {
 	{
 		this.type = type;
 		this.serverToCrash = server;
+	}
+	
+	   /**
+  * This method is called whenever something is committed/aborted in order to flush rollback/abort tables to disk; 
+  */
+ public synchronized void flushCommitToDisk(ArrayList<Operation> rollback, ArrayList<Operation> abort)
+ {   
+ 	try {
+	    	//retrieve master record file (if it doesn't exist, create it and write out string)
+	        String masterPath = "/home/2011/nwebst1/comp512/data/rollbacks/master_record.loc";
+			String newLocation = "/home/2011/nwebst1/comp512/data/rollbacks";
+	        
+	        File masterFile = new File(masterPath);
+	        
+	        //if master doesn't exist, create it and write default path
+	        if (!masterFile.exists())
+	        {
+	        	//create master record file
+	        	masterFile.getParentFile().getParentFile().mkdir();
+	        	masterFile.getParentFile().mkdir();
+	        	masterFile.createNewFile();
+	        	
+	        	//create default string
+	        	newLocation = "/home/2011/nwebst1/comp512/data/rollbacks/dataA/";
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+
+	        	FileOutputStream fos = new FileOutputStream(masterFile);
+	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	        	oos.writeObject(newLocation);
+	        	fos.close();
+	        	oos.close();
+	        }
+	        //otherwise, read in string file path for master record location
+	        else
+	        {
+	        	FileInputStream fis = new FileInputStream(masterFile);
+	        	ObjectInputStream ois = new ObjectInputStream(fis);
+	        	String dataPath = (String) ois.readObject();
+	        	fis.close();
+	        	ois.close();
+	        	
+	        	//update master record				
+				String[] masterPathArray = dataPath.split("/");
+				String data_location = masterPathArray[masterPathArray.length - 1];
+				
+				if (data_location.equals("dataA"))
+				{
+					newLocation = newLocation + "/dataB/";
+				}
+				else
+				{
+					newLocation = newLocation + "/dataA/";
+				}
+				
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				
+				//write new location to master_record.loc
+				masterFile = new File(masterPath);
+				FileOutputStream fos = new FileOutputStream(masterFile);
+		    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+				oos.writeObject(newLocation);
+				fos.close();
+				oos.close();
+	        }
+    
+	    	//create file path for data for TM
+     	String filePathTM = newLocation + "rollbacks.data";
+     	
+     	//create file objects so that we can write data to disk
+	    	File tm_file = new File(filePathTM);
+	    	
+	    	//if file doesn't exist, then create it
+ 		if (!tm_file.exists())
+ 		{
+ 			tm_file.getParentFile().mkdir();
+ 			tm_file.createNewFile();
+ 		}
+			
+ 		//write TM data to disk
+ 		FileOutputStream fos = new FileOutputStream(tm_file);
+ 		ObjectOutputStream oos = new ObjectOutputStream(fos);
+ 		//write transaction table
+ 		oos.writeInt(TRANSACTION_ID);
+ 		oos.writeObject(rollback);
+ 		oos.writeObject(abort);
+ 		fos.close();
+ 		oos.close();
+					
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}  	
 	}
 
 	/**
