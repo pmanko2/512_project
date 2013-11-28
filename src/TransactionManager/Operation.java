@@ -1,17 +1,12 @@
 package TransactionManager;
 
-import java.rmi.ConnectException;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import javax.transaction.InvalidTransactionException;
 
@@ -24,20 +19,22 @@ import ResImpl.RMHashtable;
 import ResImpl.Trace;
 import ResInterface.ResourceManager;
 
-public class Operation {
+public class Operation implements Serializable {
 
-	private ResourceManager rm;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6246636976108542880L;
+	private transient ResourceManager rm;
 	private OP_CODE operation;
-	private HashMap<String, Object> arguments;
-	private LockManager lm;
+	private Hashtable<String, Object> arguments;
+	private static LockManager lm;
 	private int transaction_id;
 	private static int operation_count = 0;
-	private final int OP_ID;
+	private int OP_ID;
 	private ArrayList<String> keys;
-	private final ScheduledExecutorService scheduler;
-	private Hashtable<String, ScheduledFuture<Boolean>> scheduledFutures;
 	
-	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l)
+	public Operation(int id, ResourceManager r, OP_CODE op, Hashtable<String,Object> args, LockManager l)
 	{
 		transaction_id = id;
 		rm = r;
@@ -47,11 +44,9 @@ public class Operation {
 		OP_ID = operation_count;
 		operation_count++;
 		keys = new ArrayList<String>();
-		scheduler = Executors.newScheduledThreadPool(1000);
-		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
-	public Operation(int id, ResourceManager r, OP_CODE op, HashMap<String,Object> args, LockManager l, int specified_id)
+	public Operation(int id, ResourceManager r, OP_CODE op, Hashtable<String,Object> args, LockManager l, int specified_id)
 	{
 		transaction_id = id;
 		rm = r;
@@ -60,8 +55,6 @@ public class Operation {
 		lm = l;
 		OP_ID = specified_id;
 		keys = new ArrayList<String>();
-		scheduler = Executors.newScheduledThreadPool(1000);
-		scheduledFutures = new Hashtable<String, ScheduledFuture<Boolean>>();
 	}
 	
 	/**
@@ -381,7 +374,6 @@ public class Operation {
 			Trace.error("Did not receive commit confirmation from RM server. Server crashed. Returning false");
 			return false;
 		} catch (TransactionAbortedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return false;
@@ -421,12 +413,68 @@ public class Operation {
 	}
 	
 	/**
-	 * get key on which this operation depends
+	 * get keys on which this operation depends
 	 * @return
 	 */
 	public ArrayList<String> getKeys()
 	{
 		return keys;
+	}
+	
+	/**
+	 * Method used to reexecute this operation on RM upon TM recovery. Also reassigns the RM for this operation (since it couldn't be serialized) 
+	 */
+	public void reexecute(LockManager l, ResourceManager flights, ResourceManager cars, ResourceManager hotels, ResourceManager mw)
+	{
+		//reassign lock manager
+		lm = l;
+		
+		//reassign rm pointer
+		if (operation == OP_CODE.ADD_FLIGHT ||
+				operation == OP_CODE.DELETE_FLIGHT ||
+				operation == OP_CODE.QUERY_FLIGHTS ||
+				operation == OP_CODE.QUERY_FLIGHT_PRICE)
+		{
+			rm = flights;
+		}
+		else if (operation == OP_CODE.ADD_CARS ||
+				operation == OP_CODE.DELETE_CARS ||
+				operation == OP_CODE.QUERY_CAR_PRICE ||
+				operation == OP_CODE.QUERY_CARS)
+		{
+			rm = cars;
+		}
+		else if (operation == OP_CODE.ADD_ROOMS ||
+				operation == OP_CODE.DELETE_ROOMS ||
+				operation == OP_CODE.QUERY_ROOM_PRICE ||
+				operation == OP_CODE.QUERY_ROOMS)
+		{
+			rm = hotels;
+		}
+		else 
+		{
+			rm = mw;
+		}
+		
+		//reexecute this operation
+		if (operation == OP_CODE.QUERY_CUSTOMER_INFO)
+		{
+			executeStringReturn();
+		}
+		else if (operation == OP_CODE.NEW_CUSTOMER ||
+				operation == OP_CODE.QUERY_FLIGHTS ||
+				operation == OP_CODE.QUERY_CARS ||
+				operation == OP_CODE.QUERY_ROOMS ||
+				operation == OP_CODE.QUERY_FLIGHT_PRICE ||
+				operation == OP_CODE.QUERY_CAR_PRICE ||
+				operation == OP_CODE.QUERY_ROOM_PRICE)
+		{
+			executeIntReturn();
+		}
+		else
+		{
+			execute();
+		}
 	}
 	
 	/**
@@ -445,10 +493,6 @@ public class Operation {
 	public Vote requestVoteFromRM() throws RMCrashException
 	{
 		try {
-			
-			/*TimeoutTimer rmTimeout = new TimeoutTimer(rm.getName(), this);
-			ScheduledFuture<Boolean> scheduledFuture = scheduler.schedule(rmTimeout, 5, TimeUnit.SECONDS);
-			scheduledFutures.put("" + OP_ID, scheduledFuture);*/
 			return rm.vote(this.OP_ID, this.operation);
 		} catch (RemoteException e) {
 			Trace.error("Remote Exception in RM. Could not connect to RM");
@@ -469,6 +513,11 @@ public class Operation {
 	public void rollback() throws RemoteException
 	{
 		rm.rollback();
+	}
+
+	public static void setOpCount(int count)
+	{
+		operation_count = count;
 	}
 	
 	

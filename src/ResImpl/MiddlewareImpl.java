@@ -17,7 +17,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -131,78 +131,7 @@ public class MiddlewareImpl implements ResourceManager {
         
 
         try {
-        	/**
-        	 * LOAD DATA INTO MAIN  MEMORY
-        	 */
-        	//read in any existing data
-            System.out.println("Reading in existing data...");
-            String masterPath = "/home/2011/nwebst1/comp512/data/customers/master_record.loc";
-            File f = new File(masterPath);
-            //if Master Record doesn't exist we ignore all other file reads
-            if (f.exists())
-            {
-            	//get path to master record
-            	FileInputStream fis = new FileInputStream(masterPath);
-            	ObjectInputStream ois = new ObjectInputStream(fis);
-            	String masterRecordPath = (String) ois.readObject();
-            	fis.close();
-            	ois.close();
-            	
-            	//get paths to data items for this RM
-            	String filePathItems = masterRecordPath + "items_table.data";
-            	String filePathCommit = masterRecordPath + "non_committed_items_table.data";
-            	String filePathAbort = masterRecordPath + "abort_items_table.data";
-            	String filePathTM = masterRecordPath + "transaction_manager.data";
-            	
-            	//create file objects for these data files
-            	File items_file = new File(filePathItems);
-    	      	File commit_file = new File(filePathCommit);
-    	      	File abort_file = new File(filePathAbort);
-    	      	File tm_file = new File(filePathTM);
-    	      	
-    	      	//load items data into memory
-    	    	if(items_file.exists()){
-    	        	fis = new FileInputStream(items_file);
-    	        	ois = new ObjectInputStream(fis);
-
-    	        	m_itemHT = (RMHashtable) ois.readObject();
-    	        	fis.close();
-    	        	ois.close();
-    	        }
-    	    	
-    	      	//load commit data into memory
-    	    	if(commit_file.exists()){
-    	        	fis = new FileInputStream(commit_file);
-    	        	ois = new ObjectInputStream(fis);
-
-    	        	non_committed_items = (RMHashtable) ois.readObject();
-    	        	fis.close();
-    	        	ois.close();
-    	        }
-    	    	
-    	      	//load abort data into memory
-    	    	if(abort_file.exists()){
-    	        	fis = new FileInputStream(abort_file);
-    	        	ois = new ObjectInputStream(fis);
-
-    	        	abort_items = (RMHashtable) ois.readObject();
-    	        	fis.close();
-    	        	ois.close();
-    	        }
-    	    	
-    	    	//load TM data into memory
-    	    	if (tm_file.exists())
-    	    	{
-    	    		fis = new FileInputStream(tm_file);
-    	    		ois = new ObjectInputStream(fis);
-    	    		
-    	    		tm = (TransactionManager) ois.readObject();
-    	    		fis.close();
-    	    		ois.close();
-    	    	}
-            }
-        	
-        	
+        	 
         	/**
         	 * CONNECT TO RMIREGISTRY AS SERVER TO BE CONNECTED TO FROM CLIENT
         	 */
@@ -236,9 +165,9 @@ public class MiddlewareImpl implements ResourceManager {
             // get the proxy and the remote reference by rmiregistry lookup for the rooms server
             Registry registry_rooms = LocateRegistry.getRegistry(rooms_server, rm_port);
             rooms_rm = (ResourceManager) registry_rooms.lookup("group_7_RM");
-            
+                   
             //create the transactionmanager object
-            tm = new TransactionManager(obj);
+            tm = new TransactionManager(flights_rm, cars_rm, rooms_rm, obj);
             
             if(cars_rm!=null && flights_rm!=null && rooms_rm!=null)
             {
@@ -250,6 +179,48 @@ public class MiddlewareImpl implements ResourceManager {
                 System.out.println("Unsuccessful");
             }
             // make call on remote method
+            
+            /**
+        	 * LOAD DATA INTO MAIN  MEMORY
+        	 */
+        	//read in any existing data
+            System.out.println("Reading in existing data...");
+            String masterPath = "/home/2011/nwebst1/comp512/data/middleware/master_record.loc";
+            File f = new File(masterPath);
+            //if Master Record doesn't exist we ignore all other file reads
+            if (f.exists())
+            {
+            	//get path to master record
+            	FileInputStream fis = new FileInputStream(masterPath);
+            	ObjectInputStream ois = new ObjectInputStream(fis);
+            	String masterRecordPath = (String) ois.readObject();
+            	fis.close();
+            	ois.close();
+            	
+            	//get paths to data items for this RM
+            	String filePathItems = masterRecordPath + "items_table.data";
+            	String filePathTM = masterRecordPath + "transaction_manager.data";
+            	
+            	//create file objects for these data files
+            	File items_file = new File(filePathItems);
+    	      	File tm_file = new File(filePathTM);
+    	      	
+    	      	//load items data into memory
+    	    	if(items_file.exists()){
+    	        	fis = new FileInputStream(items_file);
+    	        	ois = new ObjectInputStream(fis);
+
+    	        	m_itemHT = (RMHashtable) ois.readObject();
+    	        	fis.close();
+    	        	ois.close();
+    	        }
+    	    	
+    	    	//load TM data into memory
+    	    	if (tm_file.exists())
+    	    	{
+    	    		tm.readFromDisk(filePathTM);
+    	    	}
+            }
             
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
@@ -272,7 +243,7 @@ public class MiddlewareImpl implements ResourceManager {
    public int start() throws RemoteException
     {
 	   int return_value = tm.start();
-	  // flushToDisk();
+	   //flushToDisk();
 	   return return_value;
     }
     
@@ -347,8 +318,8 @@ public class MiddlewareImpl implements ResourceManager {
     {   
     	try {
 	    	//retrieve master record file (if it doesn't exist, create it and write out string)
-	        String masterPath = "/home/2011/nwebst1/comp512/data/customers/master_record.loc";
-	        String dataPath;
+	        String masterPath = "/home/2011/nwebst1/comp512/data/middleware/master_record.loc";
+			String newLocation = "/home/2011/nwebst1/comp512/data/middleware";
 	        
 	        File masterFile = new File(masterPath);
 	        
@@ -361,11 +332,11 @@ public class MiddlewareImpl implements ResourceManager {
 	        	masterFile.createNewFile();
 	        	
 	        	//create default string
-	        	dataPath = "/home/2011/nwebst1/comp512/data/customers/dataA/";
+	        	newLocation = "/home/2011/nwebst1/comp512/data/middleware/dataA/";
 	        	
 	        	FileOutputStream fos = new FileOutputStream(masterFile);
 	        	ObjectOutputStream oos = new ObjectOutputStream(fos);
-	        	oos.writeObject(dataPath);
+	        	oos.writeObject(newLocation);
 	        	fos.close();
 	        	oos.close();
 	        }
@@ -374,38 +345,49 @@ public class MiddlewareImpl implements ResourceManager {
 	        {
 	        	FileInputStream fis = new FileInputStream(masterFile);
 	        	ObjectInputStream ois = new ObjectInputStream(fis);
-	        	dataPath = (String) ois.readObject();
+	        	String dataPath = (String) ois.readObject();
 	        	fis.close();
 	        	ois.close();
+	        	
+	        	//update master record				
+				String[] masterPathArray = dataPath.split("/");
+				String data_location = masterPathArray[masterPathArray.length - 1];
+				
+				if (data_location.equals("dataA"))
+				{
+					newLocation = newLocation + "/dataB/";
+				}
+				else
+				{
+					newLocation = newLocation + "/dataA/";
+				}
+				
+				Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
+				
+				//write new location to master_record.loc
+				masterFile = new File(masterPath);
+				FileOutputStream fos = new FileOutputStream(masterFile);
+		    	ObjectOutputStream oos = new ObjectOutputStream(fos);
+				oos.writeObject(newLocation);
+				fos.close();
+				oos.close();
 	        }
-	        
-	        
+       
 	    	//create file paths for data for this RM
         	//get paths to data items for this RM
-        	String filePathItems = dataPath + "items_table.data";
-        	String filePathCommit = dataPath + "non_committed_items_table.data";
-        	String filePathAbort = dataPath + "abort_items_table.data";
-        	String filePathTM = dataPath + "transaction_manager.data";
+        	String filePathItems = newLocation + "items_table.data";
+        	String filePathTM = newLocation + "transaction_manager.data";
         	
         	//create file objects so that we can write data to disk
 	    	File items_file = new File(filePathItems);
-	    	File commit_file = new File(filePathCommit);
-	    	File abort_file = new File(filePathAbort);
 	    	File tm_file = new File(filePathTM);
 	    	
-    		// if files don't exist, then create then
+    		// if files don't exist, then create them
     		if (!items_file.exists()) {
     			items_file.getParentFile().mkdirs();
     			items_file.createNewFile();
     		}
-    		if (!commit_file.exists()) {
-    			commit_file.getParentFile().mkdirs();
-    			commit_file.createNewFile();
-    		}    		
-    		if (!abort_file.exists()) {
-    			abort_file.getParentFile().mkdirs();
-    			abort_file.createNewFile();
-    		}
+    		
     		if (!tm_file.exists())
     		{
     			tm_file.getParentFile().mkdir();
@@ -419,61 +401,75 @@ public class MiddlewareImpl implements ResourceManager {
 			fos.close();
 			oos.close();
 			
-        	//write "commit" items to disk
-	    	fos = new FileOutputStream(commit_file);
-	    	oos = new ObjectOutputStream(fos);
-			oos.writeObject(non_committed_items);
-			fos.close();
-			oos.close();
-			
-        	//write "abort" items to disk
-	    	fos = new FileOutputStream(abort_file);
-	    	oos = new ObjectOutputStream(fos);
-			oos.writeObject(abort_items);
-			fos.close();
-			oos.close();
-			
-			//write TM data to disk
-			fos = new FileOutputStream(tm_file);
-			oos = new ObjectOutputStream(fos);
-			oos.writeObject(tm);
-			fos.close();
-			oos.close();
-			
-			//update master record
-			String newLocation = "/home/2011/nwebst1/comp512/data/customers";
-			
-			String[] masterPathArray = dataPath.split("/");
-			String data_location = masterPathArray[masterPathArray.length - 1];
-			
-			if (data_location.equals("dataA"))
-			{
-				newLocation = newLocation + "/dataB/";
-			}
-			else
-			{
-				newLocation = newLocation + "/dataA/";
-			}
-			
-			Trace.info("NEW MASTERFILE LOCATION: " + newLocation);
-			
-			//write new location to master_record.loc
-			masterFile = new File(masterPath);
-			fos = new FileOutputStream(masterFile);
-	    	oos = new ObjectOutputStream(fos);
-			oos.writeObject(newLocation);
-			fos.close();
-			oos.close();
-			
+			//flush tm data to disk
+			tm.flushToDisk(filePathTM);
+					
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}  	
     }
      
+    /**
+     * This method loads in the least-recently written data
+     */
+    public void rollback() throws RemoteException 
+    {
+    	try {
+		    System.out.println("Reading in existing data...");
+		    String masterPath = "/home/2011/nwebst1/comp512/data/middleware/master_record.loc";
+		    File f = new File(masterPath);
+		    
+			String newLocation = "/home/2011/nwebst1/comp512/data/middleware";
+		    
+			//if master doesn't exist, create it and write default path
+		    if (f.exists())
+		    {
+			    //get path to master record
+		    	FileInputStream fis = new FileInputStream(f);
+		    	ObjectInputStream ois = new ObjectInputStream(fis);
+		    	String dataPath = (String) ois.readObject();
+		    	fis.close();
+		    	ois.close();
+		    	
+		    	//update master record		
+				String[] masterPathArray = dataPath.split("/");
+				String data_location = masterPathArray[masterPathArray.length - 1];
+				
+				if (data_location.equals("dataA"))
+				{
+					newLocation = newLocation + "/dataB/";
+				}
+				else
+				{
+					newLocation = newLocation + "/dataA/";
+				}	
+		    }
+			
+			//get paths to data items for this RM
+			String filePathItems = newLocation + "items_table.data";
+			
+			//create file objects for these data files
+			File items_file = new File(filePathItems);
+		  	
+		  	//load items data into memory
+			if(items_file.exists()){
+		    	FileInputStream fis = new FileInputStream(items_file);
+		    	ObjectInputStream ois = new ObjectInputStream(fis);
+		    	m_itemHT = (RMHashtable) ois.readObject();
+		    	fis.close();
+		    	ois.close();
+		    }
+    	}
+    	catch (IOException e) 
+    	{
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+    }
 	
     // Reads a data item
     private RMItem readData( int id, String key )
@@ -603,7 +599,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addFlight(int id, int flightNum, int flightSeats,
 			int flightPrice) throws RemoteException {
 			
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Flight.getKey(flightNum));
 		args.put("flightNum", flightNum);
 		args.put("flightSeats", flightSeats);
@@ -613,7 +609,8 @@ public class MiddlewareImpl implements ResourceManager {
 		keys.add((String)args.get("key"));
 		
 		//returns true if transaction was able to acquire all locks necessary for this operation
-		return tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args, keys);
+		boolean to_return = tm.addOperation(id, flights_rm, OP_CODE.ADD_FLIGHT, args, keys);
+		return to_return;
 	}
 
 	@Override
@@ -621,7 +618,7 @@ public class MiddlewareImpl implements ResourceManager {
 			throws RemoteException {
 		
 		long start = System.currentTimeMillis();
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		args.put("numCars", numCars);
@@ -641,7 +638,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean addRooms(int id, String location, int numRooms, int price)
 			throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		args.put("numRooms", numRooms);
@@ -660,7 +657,7 @@ public class MiddlewareImpl implements ResourceManager {
     public int newCustomer(int id)
         throws RemoteException
     {
-    	HashMap<String, Object> args = new HashMap<String, Object>();
+    	Hashtable<String, Object> args = new Hashtable<String, Object>();
     	
         // Generate a globally unique ID for the new customer
         int cid = Integer.parseInt( String.valueOf(id) +
@@ -712,7 +709,7 @@ public class MiddlewareImpl implements ResourceManager {
     public boolean newCustomer(int id, int customerID )
         throws RemoteException
     {
-    	HashMap<String, Object> args = new HashMap<String, Object>();
+    	Hashtable<String, Object> args = new Hashtable<String, Object>();
         args.put("key", Customer.getKey(customerID));
         args.put("cid", customerID);
         
@@ -725,7 +722,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean deleteFlight(int id, int flightNum) throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 	
 		args.put("key",  Flight.getKey(flightNum));
 		args.put("flightNum", flightNum);
@@ -739,7 +736,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public boolean deleteCars(int id, String location) throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		
@@ -751,7 +748,7 @@ public class MiddlewareImpl implements ResourceManager {
 
 	@Override
 	public boolean deleteRooms(int id, String location) throws RemoteException {
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		
@@ -765,7 +762,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean deleteCustomer(int id, int customerID)
         throws RemoteException
     {
-    	HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
         args.put("key", Customer.getKey(customerID));
         args.put("cid", customerID);
         args.put("customer_object", m_itemHT.get(Customer.getKey(customerID)));
@@ -837,7 +834,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public int queryFlight(int id, int flightNumber) throws RemoteException {
 
 		long start = System.currentTimeMillis();
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Flight.getKey(flightNumber));
 		args.put("flightNum", flightNumber);
 		
@@ -855,7 +852,7 @@ public class MiddlewareImpl implements ResourceManager {
 
 		long start = System.currentTimeMillis();
 		
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		
@@ -871,7 +868,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryRooms(int id, String location) throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		
@@ -886,7 +883,7 @@ public class MiddlewareImpl implements ResourceManager {
         throws RemoteException
     {
     	long start = System.currentTimeMillis();
-		HashMap<String, Object> args = new HashMap<String, Object>();
+    	Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Customer.getKey(customerID));
 		args.put("cid", customerID);
 		
@@ -925,7 +922,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public int queryFlightPrice(int id, int flightNumber)
 			throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Flight.getKey(flightNumber));
 		args.put("flightNum", flightNumber);
 		
@@ -938,7 +935,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryCarsPrice(int id, String location) throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Car.getKey(location));
 		args.put("location", location);
 		
@@ -951,7 +948,7 @@ public class MiddlewareImpl implements ResourceManager {
 	@Override
 	public int queryRoomsPrice(int id, String location) throws RemoteException {
 
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("key", Hotel.getKey(location));
 		args.put("location", location);
 		
@@ -965,7 +962,7 @@ public class MiddlewareImpl implements ResourceManager {
 	public boolean reserveFlight(int id, int customer, int flightNumber)
 			throws RemoteException {
 		
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("flight_key", Flight.getKey(flightNumber));
 		args.put("customer_key", Customer.getKey(customer));
 		args.put("cid", customer);
@@ -992,7 +989,7 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		long start = System.currentTimeMillis();
 		
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("car_key", Car.getKey(location));
 		args.put("customer_key", Customer.getKey(customer));
 		args.put("cid", customer);
@@ -1022,7 +1019,7 @@ public class MiddlewareImpl implements ResourceManager {
 		
 		long start = System.currentTimeMillis();
 		
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("room_key", Hotel.getKey(location));
 		args.put("customer_key", Customer.getKey(customer));
 		args.put("cid", customer);
@@ -1051,7 +1048,7 @@ public class MiddlewareImpl implements ResourceManager {
 			String location, boolean car, boolean room) throws RemoteException {
 
 		long start = System.currentTimeMillis();
-		HashMap<String, Object> args = new HashMap<String, Object>();
+		Hashtable<String, Object> args = new Hashtable<String, Object>();
 		args.put("customer_key", Customer.getKey(customer));
 		args.put("cid", customer);
 		args.put("flightNumbers", flightNumbers);
@@ -1200,12 +1197,6 @@ public class MiddlewareImpl implements ResourceManager {
 	}
 
 	@Override
-	public boolean selfDestruct() throws RemoteException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public Vote vote(int operationID, OP_CODE code) 
 	{
 		boolean voteYes = (non_committed_items.get("" + operationID) != null) || (abort_items.get("" + operationID) != null);
@@ -1246,13 +1237,5 @@ public class MiddlewareImpl implements ResourceManager {
 			tm.setCrashFlags(rooms_rm, crashType, serverToCrash);
 		
 	}
-
-	@Override
-	public void rollback() throws RemoteException 
-	{
-		// TODO Auto-generated method stub
-		
-	}
-
 
 }

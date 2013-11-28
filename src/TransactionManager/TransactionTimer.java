@@ -1,5 +1,6 @@
 package TransactionManager;
 
+import java.rmi.RemoteException;
 import java.util.concurrent.Callable;
 
 import ResImpl.Trace;
@@ -23,7 +24,11 @@ public class TransactionTimer implements Callable<Boolean> {
 	@Override
 	public Boolean call() throws TransactionAbortedException {
 		Trace.info("Transaction " + transactionID + " has run out of time. Aborting.");
-		transactionManager.abort(transactionID);
+		try {
+			transactionManager.abort(transactionID);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 		return new Boolean(true);
 	}
 }

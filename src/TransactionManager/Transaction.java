@@ -1,8 +1,12 @@
 package TransactionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Hashtable;
 
 import LockManager.LockManager;
 import ResImpl.CrashType;
@@ -14,11 +18,15 @@ import ResInterface.ResourceManager;
  * @author nic
  *
  */
-public class Transaction {
+public class Transaction implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4994756763174534648L;
 	private final int TRANSACTION_ID;
 	//array list of operations this transaction is responsible for
-	private ArrayList<Operation> operations;
+	private transient ArrayList<Operation> operations;
 	private LockManager lm;
 	private ResourceManager serverToCrash;
 	private CrashType type;
@@ -45,7 +53,7 @@ public class Transaction {
 	 * Adds an operation to this transaction
 	 * @param o
 	 */
-	public boolean addOperation(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	public boolean addOperation(ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
 		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
@@ -53,10 +61,12 @@ public class Transaction {
 		
 		//attempt to acquire necessary locks and execute transaction. This returns true 
 		//if the operation was able to successfully obtain locks execute (locally!)
-		return o.execute();
+		boolean to_return = o.execute();
+		Trace.info("Transaction " + TRANSACTION_ID + " contains " + operations.size() + " operations.");
+		return to_return;
 	}
 	
-	public int addOperationIntReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	public int addOperationIntReturn(ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
 		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
@@ -67,7 +77,7 @@ public class Transaction {
 		return o.executeIntReturn();
 	}
 	
-	public String addOperationStringReturn(ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	public String addOperationStringReturn(ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys)
 	{
 		//create operation and add to operation queue
 		Operation o = createOperation(TRANSACTION_ID, r, op, args, keys);
@@ -81,8 +91,12 @@ public class Transaction {
 	//this method creates an operation - replaces an operation if the key and the 
 	//OP_CODE are the same
 	@SuppressWarnings("unused")
-	public Operation createOperation(int id, ResourceManager r, OP_CODE op, HashMap<String, Object> args, ArrayList<String> keys)
+	public Operation createOperation(int id, ResourceManager r, OP_CODE op, Hashtable<String, Object> args, ArrayList<String> keys)
 	{
+		if (operations == null)
+		{
+			operations = new ArrayList<Operation>();
+		}
 		//TODO Review logic in this method (should it return an arraylist<Operations>?
 		Operation return_value;
 		boolean create_new = true;
@@ -386,5 +400,63 @@ public class Transaction {
 		this.serverToCrash = server;
 	}
 
+	/**
+	 * Reset the lockmanager pointer in the transaction and then pass it to the operations  
+	 * in this transaction along with all the other rms so that they can reacquire
+	 * all necessary locks and reexecute. Also returns max op id in this transaction 
+	 * (used to reset the op counter)
+	 * @param l
+	 */
+	public int reexecute(LockManager l, ResourceManager flights, ResourceManager cars, 
+			ResourceManager hotels, ResourceManager mw)
+	{
+		lm = l;
+		int max = 0;
+		Trace.info("Transaction " + TRANSACTION_ID + " contains " + operations.size() + " operations.");
+		for (Operation o : operations)
+		{
+			o.reexecute(lm, flights, cars, hotels, mw);
+			if (o.getOpID() > max)
+			{
+				max = o.getOpID();
+			}
+		}
+		return max;
+	}
+	
+	/**
+	 * Used to deserialize a transaction
+	 * @param in
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException {
+		     
+		//always perform the default de-serialization first
+	     in.defaultReadObject();
+	     operations = new ArrayList<Operation>();
+	     int totalOps = in.readInt();
+	     //Trace.info("Total ops in transaction read-in: " + totalOps);
+	     for (int i = 0; i < totalOps; i++)
+	     {
+	    	operations.add((Operation)in.readObject());
+	     }
+		//Trace.info("Reading transaction " + TRANSACTION_ID + ", which has " + operations.size() + " operations");
 
+	}
+
+  	/**
+    * This is used to serialize a transaction
+    */
+    private void writeObject(ObjectOutputStream out) throws IOException {
+      
+    	//perform the default serialization for all non-transient, non-static fields
+		//Trace.info("Writing transaction " + TRANSACTION_ID + ", which has " + operations.size() + " operations");
+    	out.defaultWriteObject();
+    	out.writeInt(operations.size());
+    	for (Operation o : operations)
+    	{
+           	out.writeObject(o);
+    	}
+    }
 }
