@@ -215,6 +215,17 @@ public class Transaction implements Serializable {
 		}
 		
 		flushCommitToDisk(rollBack, abortList);
+		
+		if(type == CrashType.TM_SOME_DECISIONS_SENT)
+		{
+			try
+			{
+				serverToCrash.crash("middleware");
+			} catch (RemoteException e)
+			{
+				e.printStackTrace();
+			}
+		}
 
 		
 		for (Operation o : roomOperations)
