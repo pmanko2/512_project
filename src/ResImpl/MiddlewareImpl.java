@@ -49,7 +49,9 @@ public class MiddlewareImpl implements ResourceManager {
 	
 	private static int port;
 	private static String registry_name;
+	@SuppressWarnings("unused")
 	private static CrashType crashType;
+	@SuppressWarnings("unused")
 	private static String serverToCrash;
 
 	/**
